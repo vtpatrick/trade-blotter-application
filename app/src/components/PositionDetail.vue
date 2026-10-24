@@ -8,7 +8,7 @@ import {
   type SecurityProfile,
 } from '@/api/bloomberg'
 import { useBlotterStore } from '@/stores/blotter'
-import { formatPrice } from '@/utils/format'
+import { formatPrice, formatQuantity } from '@/utils/format'
 import PriceHistoryChart, { type ChartTrade } from './PriceHistoryChart.vue'
 
 const props = defineProps<{
@@ -57,6 +57,26 @@ const chartTrades = computed<ChartTrade[]>(() =>
       price: t.price,
     })),
 )
+
+// ---------- this symbol's trade history ----------
+const historyDate = new Intl.DateTimeFormat(undefined, {
+  day: 'numeric',
+  month: 'short',
+  year: '2-digit',
+})
+
+/** The user's trades in this symbol, newest first, each with the net position it left. */
+const tradeHistory = computed(() => {
+  let net = 0
+  return trades.value
+    .filter((t) => t.symbol === props.symbol)
+    .sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp) || a.id - b.id)
+    .map((t) => {
+      net += t.side === 'Buy' ? t.quantity : -t.quantity
+      return { ...t, date: historyDate.format(new Date(t.timestamp)), positionAfter: net }
+    })
+    .reverse()
+})
 
 // ---------- field formatting ----------
 const compact = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 })
@@ -167,6 +187,41 @@ const rangePosition = computed(() => {
       </template>
     </section>
 
+    <section class="trades" :aria-label="`Your ${symbol} trades`">
+      <h3 class="panel-title">
+        Your trades <span class="muted-count">{{ tradeHistory.length }}</span>
+      </h3>
+      <div class="trades-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Side</th>
+              <th class="num">Qty</th>
+              <th class="num">Price</th>
+              <th class="num" title="Net position after the trade">Pos after</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="t in tradeHistory" :key="t.id">
+              <td class="date" :title="new Date(t.timestamp).toLocaleString()">{{ t.date }}</td>
+              <td>
+                <span class="side" :class="t.side === 'Buy' ? 'buy' : 'sell'">{{ t.side }}</span>
+              </td>
+              <td class="num">{{ formatQuantity(t.quantity) }}</td>
+              <td class="num">{{ formatPrice(t.price) }}</td>
+              <td
+                class="num"
+                :class="t.positionAfter > 0 ? 'long' : t.positionAfter < 0 ? 'short' : 'flat'"
+              >
+                {{ t.positionAfter === 0 ? 'flat' : formatQuantity(t.positionAfter) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <section class="history">
       <p v-if="historyState === 'loading'" class="muted">Loading price history…</p>
       <p v-else-if="historyState === 'unavailable'" class="muted">
@@ -194,7 +249,7 @@ const rangePosition = computed(() => {
 
 @media (min-width: 1100px) {
   .detail {
-    grid-template-columns: minmax(380px, 500px) minmax(0, 1fr);
+    grid-template-columns: minmax(340px, 440px) minmax(300px, 360px) minmax(0, 1fr);
   }
 }
 
@@ -277,13 +332,91 @@ dd {
   text-align: right;
 }
 
-/* Two panels side by side, stretched to the same height so their bottoms line up. */
+/* Panels side by side, stretched to the same height so their bottoms line up. */
 .fields,
+.trades,
 .history {
   min-width: 0;
   padding: 0.5rem 0.65rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
+}
+.trades {
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-title {
+  margin-bottom: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.muted-count {
+  margin-left: 0.25rem;
+  font-weight: 500;
+}
+
+/* Long histories scroll inside the panel instead of stretching the row. */
+.trades-scroll {
+  flex: 1;
+  max-height: 17rem;
+  overflow-y: auto;
+}
+
+.trades table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.trades th {
+  position: sticky;
+  top: 0;
+  padding: 0.1rem 0.35rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.trades th.num {
+  text-align: right;
+}
+
+.trades td {
+  padding: 0.08rem 0.35rem;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.trades .date {
+  font-family: var(--font-mono);
+  color: var(--color-text-muted);
+}
+
+.trades .side {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.trades .side.buy,
+.trades .long {
+  color: var(--color-buy);
+}
+
+.trades .side.sell,
+.trades .short {
+  color: var(--color-sell);
+}
+
+.trades .flat {
+  color: var(--color-text-muted);
 }
 </style>
