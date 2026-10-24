@@ -9,6 +9,7 @@ import TradeEntryForm from '../TradeEntryForm.vue'
 // The ticket looks up a live Bloomberg price as the symbol is typed; never hit DeskLink in tests.
 const bloomberg = vi.hoisted(() => ({
   fetchLiveQuote: vi.fn<(symbol: string, signal?: AbortSignal) => Promise<LiveQuote | null>>(),
+  fetchBloombergAvailable: vi.fn<() => Promise<boolean>>(),
 }))
 vi.mock('@/api/bloomberg', () => bloomberg)
 
@@ -29,6 +30,7 @@ describe('TradeEntryForm', () => {
     setActivePinia(createPinia())
     submitTrade = vi.spyOn(useBlotterStore(), 'submitTrade').mockResolvedValue(booked)
     bloomberg.fetchLiveQuote.mockResolvedValue(null)
+    bloomberg.fetchBloombergAvailable.mockResolvedValue(true)
   })
 
   async function fill(wrapper: ReturnType<typeof mount>, symbol: string, qty: string, px: string) {
@@ -109,5 +111,14 @@ describe('TradeEntryForm', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('says up front when live prices are unavailable on this desk', async () => {
+    bloomberg.fetchBloombergAvailable.mockResolvedValue(false)
+    const wrapper = mount(TradeEntryForm)
+    await flushPromises()
+
+    expect(wrapper.find('.price-source').text()).toBe('Live prices unavailable')
+    expect(wrapper.find('.price-source').classes()).toContain('unavailable')
   })
 })

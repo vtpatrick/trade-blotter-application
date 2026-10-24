@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, useTemplateRef, watch } from 'vue'
 import { TradeRejectedError, type Trade } from '@/api/trades'
+import { useBloombergStatus } from '@/composables/useBloombergStatus'
 import { useLiveQuote } from '@/composables/useLiveQuote'
 import { useBlotterStore } from '@/stores/blotter'
 import { formatAmount, formatPrice, formatQuantity, formatSignedPercent } from '@/utils/format'
@@ -33,6 +34,7 @@ watch(form, () => {
 
 // Live Bloomberg price for the symbol being typed (debounced; see useLiveQuote).
 const { quote, status: quoteStatus, error: quoteError } = useLiveQuote(() => form.symbol)
+const { available: bloombergAvailable } = useBloombergStatus()
 
 function useLivePrice() {
   if (quote.value) form.price = String(quote.value.last)
@@ -82,7 +84,21 @@ async function onSubmit() {
 
 <template>
   <form class="card ticket" novalidate @submit.prevent="onSubmit">
-    <h2 class="card-title">New trade</h2>
+    <h2 class="card-title">
+      <span>New trade</span>
+      <span
+        v-if="bloombergAvailable !== null"
+        class="price-source"
+        :class="{ unavailable: !bloombergAvailable }"
+        :title="
+          bloombergAvailable
+            ? 'Live prices from Bloomberg via DeskLink'
+            : 'DeskLink or the Bloomberg session is not available on this desk'
+        "
+      >
+        {{ bloombergAvailable ? 'Bloomberg live' : 'Live prices unavailable' }}
+      </span>
+    </h2>
 
     <div class="fields">
       <fieldset class="side" :class="form.side.toLowerCase()">
@@ -137,7 +153,7 @@ async function onSubmit() {
             No Bloomberg security for {{ form.symbol.trim().toUpperCase() }}
           </template>
           <template v-else>
-            <span :title="quoteError ?? undefined">Live price unavailable</span>
+            <span :title="quoteError ?? undefined">Live prices unavailable</span>
           </template>
         </div>
       </div>
@@ -240,6 +256,18 @@ input[aria-invalid='true'] {
   text-transform: uppercase;
   font-family: var(--font-mono);
   letter-spacing: 0.04em;
+}
+
+.price-source {
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--color-text-muted);
+}
+
+.price-source.unavailable,
+.live-quote.unavailable {
+  color: var(--color-danger);
 }
 
 .live-quote {

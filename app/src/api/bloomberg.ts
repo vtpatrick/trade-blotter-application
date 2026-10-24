@@ -278,3 +278,22 @@ export function fetchPriceHistory(symbol: string): Promise<PricePoint[]> {
 export function clearPriceHistoryCache() {
   historyCache.clear()
 }
+
+/**
+ * Whether DeskLink is reachable and its Bloomberg session is open. Costs no Bloomberg data,
+ * so it can be polled to show availability before any price is asked for.
+ */
+export async function fetchBloombergAvailable(signal?: AbortSignal): Promise<boolean> {
+  try {
+    const response = await fetch(`${DESKLINK_URL}/con/bloomberg/status`, { signal })
+    const body = (await response.json()) as {
+      ok?: boolean
+      data?: { connected?: boolean; sessionReady?: boolean; switchedOff?: boolean }
+    }
+    return Boolean(
+      body.ok && body.data?.connected && body.data.sessionReady && !body.data.switchedOff,
+    )
+  } catch {
+    return false
+  }
+}
