@@ -128,4 +128,16 @@ public sealed class TradesApiTests : IDisposable
         Assert.NotNull(health);
         Assert.Contains(health.Checks, c => c.Name == "database" && c.Status == "Healthy");
     }
+
+    [Fact]
+    public async Task The_exercise_brief_paths_work_as_well_as_the_api_prefixed_ones()
+    {
+        var created = await _client.PostAsJsonAsync("/trades", new { symbol = "KO", side = "Buy", quantity = 10, price = 90m });
+        var trades = await _client.GetFromJsonAsync<List<TradeResponse>>("/trades", Json);
+        var positions = await _client.GetFromJsonAsync<List<Position>>("/positions", Json);
+
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        Assert.Equal(["KO"], trades!.Select(t => t.Symbol));
+        Assert.Equal([new Position("KO", 10, 90m)], positions);
+    }
 }

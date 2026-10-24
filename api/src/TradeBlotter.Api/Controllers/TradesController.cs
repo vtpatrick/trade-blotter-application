@@ -10,6 +10,7 @@ namespace TradeBlotter.Api.Controllers;
 
 [ApiController]
 [Route("api/trades")]
+[Route("trades")] // the path in the exercise brief; the app itself uses /api
 [Produces("application/json")]
 public sealed class TradesController(
     TradeBlotterDbContext db,
