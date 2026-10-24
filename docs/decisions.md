@@ -154,3 +154,19 @@ rows measure their content, so there is no fixed-height gap. The filter input ex
 passes the current model through it; without that, "Clear filters" left stale text (caught by a test).
 **Trade-off:** About 1 MB more JavaScript, as `AllCommunityModule` is registered; registering only the modules used
 would cut that. Tests drive the real grid in jsdom, and need a short settle after row changes.
+
+## 18. Bloomberg technicals beside trades and positions
+
+**Decision:** The blotter shows Bloomberg's RSI(14), 50/200-day moving averages (as price against each) and 30-day
+volatility on each trade's date. Positions shows the same figures, current.
+**Why:** The grids had a wide empty band. The author chose filling it with information over adding margins. These
+are Bloomberg's own studies (`RSI_14D`, `MOV_AVG_50D`, `MOV_AVG_200D`, `VOLATILITY_30D`), not app arithmetic, so
+they match the Terminal.
+**Details:**
+- The blotter makes one `bdh` request for every symbol, from the earliest trade to today, fetching only symbols it
+  has not yet loaded.
+- A trade uses the last bar on or before its New York trade date, so a trade booked today uses yesterday's figures.
+- Positions uses `bdp` through DeskLink's 15-minute cache, every 5 minutes.
+- Fetched in the browser, like the prices (decision 15).
+
+**Trade-off:** The blotter's request grows with history: about a year of daily bars for each traded symbol.

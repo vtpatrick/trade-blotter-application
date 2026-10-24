@@ -99,6 +99,12 @@ The blotter and Positions tables are **AG Grid Community** grids with spreadshee
 move. Positions rows expand into a full-width panel with the security description (DES-style fields), your trades in
 that symbol (each with the position it left) and the price chart. Live-price cells flash when they change.
 
+Both grids end with **Bloomberg technicals**: RSI(14), price against the 50- and 200-day moving averages, and 30-day
+volatility. On the blotter they are the figures **on each trade's date** (one `bdh` request for every symbol, once
+per session). On Positions they are **current**, compared with the live price, and refreshed every 5 minutes
+through DeskLink's 15-minute cache. They filter like any number column: `<30` on RSI finds trades made while
+oversold.
+
 Both grids have a **filter row under the column headers**: type in any column, and the columns combine with AND.
 Each input takes a small expression language (`app/src/utils/columnFilter.ts`). Hover an input for its syntax, and an
 invalid expression turns red and is ignored rather than emptying the table. On the Positions page the summary cards

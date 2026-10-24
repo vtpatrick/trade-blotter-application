@@ -298,6 +298,22 @@ Claude Sonnet 5.5 for the README, `docs/` and this log.
   - Dark mode with the grid.
   - The ticket's "unavailable" state with DeskLink actually stopped. It's covered only by a unit test.
 
+### 14. Bloomberg technicals to use the empty width
+- **Asked for:** less white space in both grids. Either compact the columns and add "technicals at the time of trade
+  from bloomberg", or add side margins.
+- **Claude did:**
+  - Chose technicals, after checking with live calls that `RSI_14D`, `MOV_AVG_50D`, `MOV_AVG_200D` and
+    `VOLATILITY_30D` work both historically (`bdh`) and currently (`bdp`).
+  - Fixed column widths, so the leftover space is one strip at the right.
+  - On the blotter, a one-request history lookup applied to each trade's New York date. On Positions, current
+    figures against the live price.
+  - Tests mock the new calls, so they never reach the real DeskLink on this machine.
+- **Problem found:** a "called once" assertion counted calls from earlier tests, until the mock was reset per test.
+- **Verified by running:**
+  - Real-browser screenshots of both grids at 1900px, with Bloomberg data: for example, the 30 Sep F buy at RSI 28.7
+    shows as oversold, and MA's RSI of 70.0 shows as overbought.
+  - Lint, type-check, and 118 tests in two runs.
+
 ---
 
 ## Author review
