@@ -114,6 +114,101 @@ Claude Sonnet 5.5 for the README, `docs/` and this log.
   were restored, and Claude re-checked them with a live run (health and positions through the proxy).
 - Everything was then committed as a single initial commit, at the author's request.
 
+### 7. Seed data: a simulated book from the author's strategy research
+- **Asked for:** simulated trades in a portfolio, based on the studies in the author's `trading-strategies` repo,
+  with prices from IBKR through DeskLink (`localhost:9195`). The author chose the peer-pairs study (35).
+- **Strategy repo:** the local checkout was 5 commits behind, but its uncommitted edits overlapped the incoming
+  ones (README, home page, .gitignore), so Claude did not pull. It read studies 32–35 from `origin/main` with
+  `git show` instead. A read-only subagent surveyed all 35 studies for ones expressible in cash equities.
+- **IBKR safety:** the TWS session was on port 7496 (normally live). Claude called only `status` and `history`
+  (market data), never account, position, P&L or order routes.
+- **Claude did:**
+  - `tools/seed-peer-pairs/generate.mjs`:
+    - Fetches a year of daily bars for 14 tickers and caches them in `.cache/`, which is not committed.
+    - Applies study 35's standing-pair rule in six groups at the July, August and September 2026 month ends.
+    - Writes 29 trades and `docs/seed-portfolio.md`.
+  - `TradeSeeder` loads the file into an empty database, in Development only, keeping historical timestamps.
+  - Integration tests now run as `Testing`, and there are 4 new seeder tests.
+- **Problems found:**
+  - FDX closes before 1 June 2026 are not whole cents. IBKR back-adjusted them for a corporate action, consistent
+    with the FedEx Freight spin-off.
+  - Claude checked that every fill is dated after that point, then made the generator detect adjusted stretches
+    and refuse to fill on them.
+  - `dotnet test` initially failed because the author's own running `dotnet watch` session locked the API binary.
+    Claude identified the process, left it running, and built the tests into a separate folder.
+- **Verified by running:**
+  - The generator against live IBKR data (14 symbols, 251 bars each), then re-run from the cache.
+  - `dotnet test`: 25 passed, including the Development-startup test that serves the seeded book (29 trades,
+    12 positions: 6 long, 6 short).
+- **Not verified:**
+  - The seed loading in the author's running instance: it had not restarted onto the new code at the time of
+    writing.
+  - The UI with the seeded book (no screenshot taken).
+
+### 8. Light/dark toggle, live Bloomberg prices, Positions page
+- **Asked for:**
+  - A light/dark toggle, since the author doesn't like dark mode.
+  - A live price in the trade ticket from Bloomberg `bdp`, debounced as the symbol is typed.
+  - A Positions page.
+- **Correction from the author:** Claude began a server-side quote endpoint. The author stopped it, because Bloomberg
+  lives on the client desktop, not the server. Claude rebuilt the feature as browser calls to DeskLink. DeskLink
+  initially sent no CORS header for `localhost:5173`; the author added the origin under Allowed hosts.
+- **Claude did:**
+  - Theme: light by default, a toggle in the header, and the choice remembered.
+  - `api/bloomberg.ts`: a single-symbol and batched `bdp` client, with `BRK.B` mapped to `BRK/B`.
+  - `useLiveQuote`: debounced, aborts the previous lookup, ignores stale responses, refreshes every 15 s.
+  - `useLiveQuotes` for batches.
+  - Ticket UI with a "Use" button.
+  - `valuePositions`: market value, unrealized and day P&L, and exposure totals.
+  - `PositionsView` at `/positions`.
+  - Tests: the frontend total went from 30 to 52.
+- **Problems found:**
+  - The composable tests reused a stopped effect scope, so the tests after the first failed.
+  - `String.replaceAll` isn't in the app's TypeScript library settings.
+  - Both were fixed.
+- **Verified by running:**
+  - A live `bdp` call for a valid ticker, an invalid one and a share class, to learn the response shapes.
+  - Headless Edge driven over the DevTools protocol, typing symbols one character at a time into the real ticket.
+    KO, BRK.B and AAPL resolved to the right name and price, and ZZQXQ showed "No Bloomberg security".
+  - The Positions page in the same browser, pricing all 12 seeded positions. Claude checked two rows by hand,
+    one long and one short.
+  - `npm run lint`, `type-check`, the test suite (52 tests) and `build`.
+- **Not verified:**
+  - The dark theme visually after the toggle change.
+  - Behaviour during market hours, when prices are actually moving. The page was tested on a Saturday, with
+    Friday's closes.
+
+### 9. Pointer cursor, expandable positions, price chart, quick filters
+- **Pointer cursor:**
+  - The author asked for the pointer cursor on buttons.
+  - The cause on Buy/Sell was an invisible radio input on top of the visible button.
+  - Claude fixed that and added a global rule, then verified in a real browser that all 36 clickable controls
+    show the pointer.
+- **Expandable rows:**
+  - Asked for: expandable position rows with DES-style key fields (ratios, dividend) and a 1–5 year price chart,
+    then quick filters on both pages.
+  - The author also sent a screenshot asking that side-by-side panels end at the same line.
+  - Claude used the `dataviz` skill's guidance. Its palette validator flagged the red/green pair as hard to tell
+    apart for colour-blind readers (ΔE 5.5), so the trade markers also differ by shape (▲ buy, ▼ sell).
+  - Fields and history come from DeskLink in the browser: `bdp` through DeskLink's 1-hour cache, and `bdh` with
+    5 years of daily closes, fetched once per symbol per session.
+  - The chart has a hover and keyboard crosshair, plus a text summary of the period's change, high and low.
+- **Equal bottoms:**
+  - The two expanded panels stretch to the same height.
+  - On the blotter page, the left column sets the row height and the blotter fills it, scrolling inside.
+- **Problems found:**
+  - `Array.at()` isn't in the app's TypeScript library settings.
+  - jsdom has no `ResizeObserver`.
+  - A test fixture was dated today, which made the "Today" filter test wrong.
+  - Text values in the monospace font wrapped. Claude saw this in its own screenshot and fixed it.
+- **Verified by running:**
+  - The full browser pass: expanded KO, switched the chart to 5Y and hovered it, and applied filters on both pages.
+  - Measured panel bottoms: 960 = 960 for the detail panels and 1078 = 1078 on the blotter page.
+  - Lint, type-check and 62 frontend tests.
+- **Not verified:**
+  - The dark theme for the new panel and chart.
+  - Phone-width layout of the expanded panel.
+
 ---
 
 ## Author review
