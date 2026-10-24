@@ -149,11 +149,7 @@
   color: var(--color-accent);
 }
 
-/* ---------- technicals column group ---------- */
-.grid .group-technicals {
-  color: var(--color-accent);
-}
-
+/* ---------- Bloomberg technicals columns ---------- */
 .grid .rsi-high,
 .grid .rsi-low {
   font-weight: 700;

@@ -2,18 +2,12 @@
 import { computed, ref, shallowRef } from 'vue'
 import { storeToRefs } from 'pinia'
 import { AgGridVue } from 'ag-grid-vue3'
-import type {
-  ColDef,
-  ColGroupDef,
-  GridApi,
-  GridReadyEvent,
-  RowClassParams,
-} from 'ag-grid-community'
+import type { ColDef, GridApi, GridReadyEvent, RowClassParams } from 'ag-grid-community'
 import type { Trade } from '@/api/trades'
 import { useTradeTechnicals } from '@/composables/useTechnicals'
 import { expressionFilter } from '@/grid/expressionFilter'
 import { spacerColumn } from '@/grid/spacerColumn'
-import { technicalColumnGroup } from '@/grid/technicalColumns'
+import { technicalColumnDefs } from '@/grid/technicalColumns'
 import { gridTheme } from '@/grid/theme'
 import { useBlotterStore } from '@/stores/blotter'
 import { formatAmount, formatPrice, formatQuantity, formatTimestamp } from '@/utils/format'
@@ -37,7 +31,7 @@ const localDate = new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
 })
 
-const columnDefs: (ColDef<TradeRow> | ColGroupDef<TradeRow>)[] = [
+const columnDefs: ColDef<TradeRow>[] = [
   {
     headerName: 'Time',
     field: 'timestamp',
@@ -100,9 +94,8 @@ const columnDefs: (ColDef<TradeRow> | ColGroupDef<TradeRow>)[] = [
     ...expressionFilter<TradeRow>('number', (t) => t.notional),
   },
   spacerColumn<TradeRow>(),
-  technicalColumnGroup<TradeRow>(
-    'At trade · Bloomberg',
-    'Bloomberg technicals on the trade date (the last close before it for a trade booked today)',
+  ...technicalColumnDefs<TradeRow>(
+    'Bloomberg, on the trade date (the last close before it for a trade booked today)',
   ),
 ]
 

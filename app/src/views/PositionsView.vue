@@ -5,7 +5,6 @@ import { AgGridVue } from 'ag-grid-vue3'
 import type {
   CellClassParams,
   ColDef,
-  ColGroupDef,
   GridApi,
   GridReadyEvent,
   RowClassParams,
@@ -18,7 +17,7 @@ import { expressionFilter } from '@/grid/expressionFilter'
 import { spacerColumn } from '@/grid/spacerColumn'
 import PositionDetailRow, { type DetailRowContext } from '@/grid/PositionDetailRow.vue'
 import { keepDetailUnderParent, toGridRows, type PositionGridRow } from '@/grid/positionRows'
-import { technicalColumnGroup } from '@/grid/technicalColumns'
+import { technicalColumnDefs } from '@/grid/technicalColumns'
 import { gridTheme } from '@/grid/theme'
 import { useBlotterStore } from '@/stores/blotter'
 import {
@@ -99,7 +98,7 @@ const num = (
     ...extra,
   }) as ColDef<PositionGridRow>
 
-const columnDefs: (ColDef<PositionGridRow> | ColGroupDef<PositionGridRow>)[] = [
+const columnDefs: ColDef<PositionGridRow>[] = [
   {
     colId: 'expand',
     headerName: '',
@@ -163,9 +162,8 @@ const columnDefs: (ColDef<PositionGridRow> | ColGroupDef<PositionGridRow>)[] = [
     enableCellChangeFlash: true,
   }),
   spacerColumn<PositionGridRow>(),
-  technicalColumnGroup<PositionGridRow>(
-    'Technicals · Bloomberg',
-    'Current Bloomberg technicals; the averages are compared with the live price',
+  ...technicalColumnDefs<PositionGridRow>(
+    'Bloomberg, current; the averages are compared with the live price',
   ),
 ]
 
