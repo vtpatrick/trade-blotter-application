@@ -6,18 +6,10 @@ namespace TradeBlotter.Api.Tests;
 public class PositionCalculatorTests
 {
     private static readonly DateTimeOffset Start = new(2026, 10, 24, 9, 30, 0, TimeSpan.Zero);
-    private static long _nextId;
 
     /// <summary>Builds a trade booked <paramref name="minute"/> minutes after the open.</summary>
-    private static Trade T(string symbol, TradeSide side, int quantity, decimal price, int minute) => new()
-    {
-        Id = Interlocked.Increment(ref _nextId),
-        Symbol = symbol,
-        Side = side,
-        Quantity = quantity,
-        Price = price,
-        Timestamp = Start.AddMinutes(minute),
-    };
+    private static Trade T(string symbol, TradeSide side, int quantity, decimal price, int minute) =>
+        new(symbol, side, quantity, price, Start.AddMinutes(minute));
 
     [Fact]
     public void No_trades_gives_no_positions()

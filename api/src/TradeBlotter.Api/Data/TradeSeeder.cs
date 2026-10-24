@@ -26,19 +26,15 @@ public static class TradeSeeder
         return file.Trades
             .Select((t, i) =>
             {
-                if (string.IsNullOrWhiteSpace(t.Symbol) || t.Quantity <= 0 || t.Price <= 0)
+                // Trade enforces its own rules; say which line of the file broke them.
+                try
                 {
-                    throw new InvalidDataException($"{path}: trade {i} needs a symbol and a positive quantity and price.");
+                    return new Trade(t.Symbol, t.Side, t.Quantity, t.Price, t.Timestamp);
                 }
-
-                return new Trade
+                catch (ArgumentException e)
                 {
-                    Symbol = t.Symbol.Trim().ToUpperInvariant(),
-                    Side = t.Side,
-                    Quantity = t.Quantity,
-                    Price = t.Price,
-                    Timestamp = t.Timestamp.ToUniversalTime(),
-                };
+                    throw new InvalidDataException($"{path}: trade {i} is invalid. {e.Message}", e);
+                }
             })
             .OrderBy(t => t.Timestamp)
             .ToList();

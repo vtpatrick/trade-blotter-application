@@ -47,15 +47,14 @@ public sealed class TradesController(
     public async Task<ActionResult<TradeResponse>> Create(
         CreateTradeRequest request, CancellationToken cancellationToken)
     {
-        // [ApiController] has already rejected invalid requests with 400, so the values are present.
-        var trade = new Trade
-        {
-            Symbol = request.Symbol!.Trim().ToUpperInvariant(),
-            Side = Enum.Parse<TradeSide>(request.Side!),
-            Quantity = request.Quantity!.Value,
-            Price = request.Price!.Value,
-            Timestamp = timeProvider.GetUtcNow(),
-        };
+        // [ApiController] has already answered invalid requests with a 400 per field, so the values are
+        // present and Trade's own checks (which would throw) only guard against a gap between the two.
+        var trade = new Trade(
+            request.Symbol!,
+            Enum.Parse<TradeSide>(request.Side!),
+            request.Quantity!.Value,
+            request.Price!.Value,
+            timeProvider.GetUtcNow());
 
         db.Trades.Add(trade);
         await db.SaveChangesAsync(cancellationToken);
