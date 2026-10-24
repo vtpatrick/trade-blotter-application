@@ -30,7 +30,8 @@ derived from the trade history. Built for the exercise in [docs/trade-blotter-ex
 4. Open <http://localhost:5173>.
 
 The API listens on <http://localhost:5035> (Swagger UI at `/swagger`). NuGet and npm packages install automatically,
-and the SQLite database is created, migrated and seeded with a year of sample trades on first start. No database
+and the SQLite database is created, migrated and seeded with the full trade book (a year of trades) on first
+start. No database
 server, market-data access or other setup is needed. Details and options follow.
 
 ## How to run the project locally
@@ -60,7 +61,7 @@ From the repo root, in two terminals:
 .\run_app.ps1   # App  -> http://localhost:5173
 ```
 
-Open <http://localhost:5173>. In development the blotter starts with a simulated year of 103 trades (see
+Open <http://localhost:5173>. In development the blotter starts with 104 trades: a simulated year of 103 plus one booked by hand (see
 [Seed data](#seed-data)); book more and open a second browser window to see them arrive live.
 
 | Script | Options |
@@ -95,7 +96,9 @@ in each of six peer groups such as T/VZ/TMUS and WMT/TGT/COST, long the 60-day l
 filled at real Interactive Brokers daily closes at each month end from October 2025 to September 2026. It produces opens, resizes, flips
 through zero and closes, which exercises every branch of the position logic.
 
-- The trades: `api/src/TradeBlotter.Api/Data/Seed/peer-pairs-trades.json`; every rebalance, explained:
+- The trades: `api/src/TradeBlotter.Api/Data/Seed/peer-pairs-trades.json`, which also holds the trades booked by hand
+  in the app (exported from the development database). Re-running the generator rewrites the file with the strategy
+  trades only. Every rebalance, explained:
   [docs/seed-portfolio.md](docs/seed-portfolio.md).
 - They are loaded by `TradeSeeder` with their historical timestamps, only when the database has no trades and only
   in Development (`Seed:TradesFile` in `appsettings.Development.json`; set it empty to start blank).

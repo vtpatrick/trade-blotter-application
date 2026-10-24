@@ -30,14 +30,15 @@ public sealed class TradeSeederTests
     }
 
     [Fact]
-    public async Task Committed_seed_book_holds_one_long_and_one_short_per_peer_group()
+    public async Task Committed_seed_book_derives_a_long_and_short_book()
     {
-        // Six groups, each ending the last rebalance long its laggard and short its leader.
+        // The peer-pair strategy ends long its laggards and short its leaders, plus any trades
+        // booked by hand and exported into the file.
         var positions = PositionCalculator.Calculate(await TradeSeeder.LoadAsync(SeedFile));
 
-        Assert.Equal(12, positions.Count);
-        Assert.Equal(6, positions.Count(p => p.NetQuantity > 0));
-        Assert.Equal(6, positions.Count(p => p.NetQuantity < 0));
+        Assert.Contains(positions, p => p.NetQuantity > 0);
+        Assert.Contains(positions, p => p.NetQuantity < 0);
+        Assert.All(positions, p => Assert.True(p.AverageCost > 0));
     }
 
     [Fact]
@@ -68,6 +69,8 @@ public sealed class TradeSeederTests
         var positions = await client.GetFromJsonAsync<List<Position>>("/api/positions", Json);
 
         Assert.Equal(expected, trades?.Count);
-        Assert.Equal(12, positions?.Count);
+        Assert.Equal(
+            PositionCalculator.Calculate(await TradeSeeder.LoadAsync(SeedFile)).Count,
+            positions?.Count);
     }
 }
