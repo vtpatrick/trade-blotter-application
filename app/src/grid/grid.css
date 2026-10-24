@@ -150,6 +150,15 @@
 }
 
 /* ---------- Bloomberg technicals columns ---------- */
+/* Set apart without breaking the rows: accent headers and a faint tint over the cells. */
+.grid .header-bbg {
+  color: var(--color-accent);
+}
+
+.grid .cell-bbg {
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+}
+
 .grid .rsi-high,
 .grid .rsi-low {
   font-weight: 700;
