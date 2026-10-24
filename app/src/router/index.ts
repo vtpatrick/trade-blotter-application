@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import BlotterView from '../views/BlotterView.vue'
+import PositionView from '../views/PositionsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,12 +13,7 @@ const router = createRouter({
     {
       path: '/positions',
       name: 'positions',
-      component: () => import('../views/PositionsView.vue'),
-    },
-    {
-      path: '/status',
-      name: 'status',
-      component: () => import('../views/StatusView.vue'),
+      component: PositionView,
     },
   ],
 })
