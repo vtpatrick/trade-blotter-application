@@ -38,7 +38,7 @@ const columnDefs: ColDef<TradeRow>[] = [
     field: 'timestamp',
     sort: 'desc',
     width: 100,
-    minWidth: 110,
+    minWidth: 160, // full date and time always fit
     cellClass: 'cell-mono cell-muted',
     valueFormatter: (p) => (p.value ? formatTimestamp(p.value) : ''),
     tooltipValueGetter: (p) => (p.value ? new Date(p.value).toLocaleString() : ''),

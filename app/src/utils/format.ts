@@ -13,17 +13,21 @@ const timeFormat = new Intl.DateTimeFormat(undefined, {
   second: '2-digit',
   hour12: false,
 })
-const dateFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
+const isoDateFormat = new Intl.DateTimeFormat('en-CA', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
 
 export const formatQuantity = (value: number) => quantityFormat.format(value)
 export const formatPrice = (value: number) => priceFormat.format(value)
 export const formatAmount = (value: number) => amountFormat.format(value)
 
-/** Time only for today's trades; date and time otherwise. */
-export function formatTimestamp(iso: string, now = new Date()): string {
+/** A trade's date and time in the viewer's zone, always with the date: 2026-10-24 10:17:11. */
+export function formatTimestamp(iso: string): string {
   const date = new Date(iso)
-  const time = timeFormat.format(date)
-  return date.toDateString() === now.toDateString() ? time : `${dateFormat.format(date)} ${time}`
+  // YYYY-MM-DD, the same form the Time column's filter takes.
+  return `${isoDateFormat.format(date)} ${timeFormat.format(date)}`
 }
 
 /** Amount with an explicit sign, for P&L: +1,234.50 / −1,234.50. */
