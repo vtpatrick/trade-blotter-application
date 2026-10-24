@@ -1,4 +1,5 @@
 import type { IRowNode } from 'ag-grid-community'
+import type { TechnicalColumns } from '@/utils/technicals'
 import type { ValuedPosition } from '@/utils/valuePositions'
 
 /**
@@ -6,10 +7,10 @@ import type { ValuedPosition } from '@/utils/valuePositions'
  * row carrying the same values, so filters and sorting treat the pair identically; postSortRows
  * then puts each detail row straight back under its position.
  */
-export type PositionGridRow = ValuedPosition & { kind: 'position' | 'detail' }
+export type PositionGridRow = ValuedPosition & TechnicalColumns & { kind: 'position' | 'detail' }
 
 export function toGridRows(
-  positions: ValuedPosition[],
+  positions: (ValuedPosition & TechnicalColumns)[],
   expanded: ReadonlySet<string>,
 ): PositionGridRow[] {
   return positions.flatMap((p) =>

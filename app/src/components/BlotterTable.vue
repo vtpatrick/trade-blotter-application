@@ -2,15 +2,32 @@
 import { computed, ref, shallowRef } from 'vue'
 import { storeToRefs } from 'pinia'
 import { AgGridVue } from 'ag-grid-vue3'
-import type { ColDef, GridApi, GridReadyEvent, RowClassParams } from 'ag-grid-community'
+import type {
+  ColDef,
+  ColGroupDef,
+  GridApi,
+  GridReadyEvent,
+  RowClassParams,
+} from 'ag-grid-community'
 import type { Trade } from '@/api/trades'
+import { useTradeTechnicals } from '@/composables/useTechnicals'
 import { expressionFilter } from '@/grid/expressionFilter'
+import { technicalColumnGroup } from '@/grid/technicalColumns'
 import { gridTheme } from '@/grid/theme'
 import { useBlotterStore } from '@/stores/blotter'
 import { formatAmount, formatPrice, formatQuantity, formatTimestamp } from '@/utils/format'
+import { NO_TECHNICALS, type TechnicalColumns } from '@/utils/technicals'
 
 const blotter = useBlotterStore()
 const { trades, newTradeIds, loading } = storeToRefs(blotter)
+
+/** A trade plus Bloomberg's technicals on its trade date. */
+type TradeRow = Trade & TechnicalColumns
+
+const { byTrade, status: technicalsStatus } = useTradeTechnicals(() => trades.value)
+const rowData = computed<TradeRow[]>(() =>
+  trades.value.map((t) => ({ ...t, ...(byTrade.value.get(t.id) ?? NO_TECHNICALS) })),
+)
 
 /** The trade's date as YYYY-MM-DD in the viewer's time zone, matching what the Time column shows. */
 const localDate = new Intl.DateTimeFormat('en-CA', {
@@ -19,7 +36,7 @@ const localDate = new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
 })
 
-const columnDefs: ColDef<Trade>[] = [
+const columnDefs: (ColDef<TradeRow> | ColGroupDef<TradeRow>)[] = [
   {
     headerName: 'Time',
     field: 'timestamp',
@@ -30,15 +47,14 @@ const columnDefs: ColDef<Trade>[] = [
     tooltipValueGetter: (p) => (p.value ? new Date(p.value).toLocaleString() : ''),
     comparator: (a: string, b: string, nodeA, nodeB) =>
       Date.parse(a) - Date.parse(b) || (nodeA.data?.id ?? 0) - (nodeB.data?.id ?? 0),
-    ...expressionFilter<Trade>('date', (t) => localDate.format(new Date(t.timestamp))),
+    ...expressionFilter<TradeRow>('date', (t) => localDate.format(new Date(t.timestamp))),
   },
   {
     headerName: 'Symbol',
     field: 'symbol',
-    minWidth: 80,
-    flex: 1,
+    width: 76,
     cellClass: 'cell-symbol',
-    ...expressionFilter<Trade>('text', (t) => t.symbol),
+    ...expressionFilter<TradeRow>('text', (t) => t.symbol),
   },
   {
     headerName: 'Side',
@@ -47,7 +63,7 @@ const columnDefs: ColDef<Trade>[] = [
     // Values are only ever Buy or Sell (validated by the API), so the markup is safe.
     cellRenderer: (p: { value: Trade['side'] }) =>
       `<span class="side-badge ${p.value === 'Buy' ? 'buy' : 'sell'}">${p.value === 'Buy' ? 'Buy' : 'Sell'}</span>`,
-    ...expressionFilter<Trade>('text', (t) => t.side),
+    ...expressionFilter<TradeRow>('text', (t) => t.side),
   },
   {
     headerName: 'Quantity',
@@ -56,7 +72,7 @@ const columnDefs: ColDef<Trade>[] = [
     cellClass: 'cell-num',
     headerClass: 'cell-num',
     valueFormatter: (p) => formatQuantity(p.value),
-    ...expressionFilter<Trade>('number', (t) => t.quantity),
+    ...expressionFilter<TradeRow>('number', (t) => t.quantity),
   },
   {
     headerName: 'Price',
@@ -65,26 +81,30 @@ const columnDefs: ColDef<Trade>[] = [
     cellClass: 'cell-num',
     headerClass: 'cell-num',
     valueFormatter: (p) => formatPrice(p.value),
-    ...expressionFilter<Trade>('number', (t) => t.price),
+    ...expressionFilter<TradeRow>('number', (t) => t.price),
   },
   {
     headerName: 'Notional',
     field: 'notional',
-    width: 120,
+    width: 112,
     cellClass: 'cell-num',
     headerClass: 'cell-num',
     valueFormatter: (p) => formatAmount(p.value),
-    ...expressionFilter<Trade>('number', (t) => t.notional),
+    ...expressionFilter<TradeRow>('number', (t) => t.notional),
   },
+  technicalColumnGroup<TradeRow>(
+    'At trade · Bloomberg',
+    'Bloomberg technicals on the trade date (the last close before it for a trade booked today)',
+  ),
 ]
 
-const defaultColDef: ColDef<Trade> = { sortable: true, resizable: true }
+const defaultColDef: ColDef<TradeRow> = { sortable: true, resizable: true }
 
-const api = shallowRef<GridApi<Trade>>()
+const api = shallowRef<GridApi<TradeRow>>()
 const shown = ref(0)
 const isFiltered = ref(false)
 
-function onGridReady(event: GridReadyEvent<Trade>) {
+function onGridReady(event: GridReadyEvent<TradeRow>) {
   api.value = event.api
   refreshCount()
 }
@@ -115,8 +135,9 @@ const countLabel = computed(() => {
   return isFiltered.value ? `${shown.value} of ${total}` : total
 })
 
-const getRowId = (p: { data: Trade }) => String(p.data.id)
-const rowClass = (p: RowClassParams<Trade>) => (p.data?.side === 'Buy' ? 'edge-buy' : 'edge-sell')
+const getRowId = (p: { data: TradeRow }) => String(p.data.id)
+const rowClass = (p: RowClassParams<TradeRow>) =>
+  p.data?.side === 'Buy' ? 'edge-buy' : 'edge-sell'
 </script>
 
 <template>
@@ -124,6 +145,13 @@ const rowClass = (p: RowClassParams<Trade>) => (p.data?.side === 'Buy' ? 'edge-b
     <h2 class="card-title">
       <span>Blotter</span>
       <span class="count">
+        <span
+          v-if="technicalsStatus === 'unavailable'"
+          class="technicals-note"
+          title="Bloomberg technicals at trade time could not be loaded (DeskLink / Bloomberg)"
+        >
+          Technicals unavailable ·
+        </span>
         {{ countLabel }}
         <button
           v-if="isFiltered"
@@ -139,7 +167,7 @@ const rowClass = (p: RowClassParams<Trade>) => (p.data?.side === 'Buy' ? 'edge-b
     <AgGridVue
       class="grid"
       :theme="gridTheme"
-      :row-data="trades"
+      :row-data="rowData"
       :column-defs="columnDefs"
       :default-col-def="defaultColDef"
       :get-row-id="getRowId"
@@ -168,6 +196,10 @@ const rowClass = (p: RowClassParams<Trade>) => (p.data?.side === 'Buy' ? 'edge-b
 .grid {
   flex: 1;
   min-height: 0;
+}
+
+.technicals-note {
+  color: var(--color-danger);
 }
 
 .count {

@@ -297,3 +297,99 @@ export async function fetchBloombergAvailable(signal?: AbortSignal): Promise<boo
     return false
   }
 }
+
+// ---------- technicals ----------
+
+/** Bloomberg's own technical studies for a security on one day (or now). */
+export interface Technicals {
+  rsi14: number | null
+  ma50: number | null
+  ma200: number | null
+  /** 30-day historical volatility, annualised, in percent. */
+  vol30: number | null
+}
+
+const TECHNICAL_FIELDS = ['RSI_14D', 'MOV_AVG_50D', 'MOV_AVG_200D', 'VOLATILITY_30D'] as const
+
+/** Technicals change slowly; let DeskLink's cache serve them for 15 minutes. */
+const TECHNICALS_CACHE_SECONDS = 900
+
+function toTechnicals(fields: Record<string, string | null | undefined> | undefined): Technicals {
+  const n = (field: string) => {
+    const raw = fields?.[field]
+    const value = Number(raw)
+    return raw === null || raw === undefined || raw === '' || !Number.isFinite(value) ? null : value
+  }
+  return {
+    rsi14: n('RSI_14D'),
+    ma50: n('MOV_AVG_50D'),
+    ma200: n('MOV_AVG_200D'),
+    vol30: n('VOLATILITY_30D'),
+  }
+}
+
+/** Current technicals for several symbols in one request, keyed by upper-case symbol. */
+export async function fetchCurrentTechnicals(
+  symbols: string[],
+  signal?: AbortSignal,
+): Promise<Map<string, Technicals>> {
+  const unique = [...new Set(symbols.map(normalize))].filter(Boolean)
+  const result = new Map<string, Technicals>()
+  if (unique.length === 0) return result
+  const data = await postDeskLink<NonNullable<BdpEnvelope['data']>>(
+    '/con/bloomberg/bdp',
+    {
+      securities: unique.map(toBloombergSecurity),
+      fields: [...TECHNICAL_FIELDS],
+      mode: 'auto',
+      ttlSeconds: TECHNICALS_CACHE_SECONDS,
+    },
+    signal,
+  )
+  for (const symbol of unique) {
+    const fields = data.data?.[toBloombergSecurity(symbol)]
+    if (fields) result.set(symbol, toTechnicals(fields))
+  }
+  return result
+}
+
+export interface DatedTechnicals extends Technicals {
+  /** YYYY-MM-DD */
+  date: string
+}
+
+/**
+ * Daily technicals for several symbols between two dates, in one bdh request, keyed by
+ * upper-case symbol, each list in date order.
+ */
+export async function fetchTechnicalsHistory(
+  symbols: string[],
+  startDate: string,
+  endDate: string,
+  signal?: AbortSignal,
+): Promise<Map<string, DatedTechnicals[]>> {
+  const unique = [...new Set(symbols.map(normalize))].filter(Boolean)
+  const result = new Map<string, DatedTechnicals[]>()
+  if (unique.length === 0) return result
+  const data = await postDeskLink<Record<string, Record<string, string | null>[]>>(
+    '/con/bloomberg/bdh',
+    {
+      securities: unique.map(toBloombergSecurity),
+      fields: [...TECHNICAL_FIELDS],
+      startDate,
+      endDate,
+      periodicitySelection: 'DAILY',
+    },
+    signal,
+  )
+  for (const symbol of unique) {
+    const rows = data[toBloombergSecurity(symbol)] ?? []
+    result.set(
+      symbol,
+      rows
+        .map((row) => ({ date: String(row.date), ...toTechnicals(row) }))
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    )
+  }
+  return result
+}

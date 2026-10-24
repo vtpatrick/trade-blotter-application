@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import type { LiveQuote, PricePoint, SecurityProfile } from '@/api/bloomberg'
+import type { LiveQuote, PricePoint, SecurityProfile, Technicals } from '@/api/bloomberg'
 import { useBlotterStore } from '@/stores/blotter'
 import PositionsView from '../PositionsView.vue'
 
@@ -9,6 +9,7 @@ const bloomberg = vi.hoisted(() => ({
   fetchLiveQuotes: vi.fn<(symbols: string[]) => Promise<Map<string, LiveQuote>>>(),
   fetchSecurityProfile: vi.fn<(symbol: string) => Promise<SecurityProfile | null>>(),
   fetchPriceHistory: vi.fn<(symbol: string) => Promise<PricePoint[]>>(),
+  fetchCurrentTechnicals: vi.fn<(symbols: string[]) => Promise<Map<string, Technicals>>>(),
 }))
 vi.mock('@/api/bloomberg', () => bloomberg)
 
@@ -39,6 +40,9 @@ describe('PositionsView (AG Grid)', () => {
     )
     bloomberg.fetchSecurityProfile.mockResolvedValue(null)
     bloomberg.fetchPriceHistory.mockResolvedValue([])
+    bloomberg.fetchCurrentTechnicals.mockResolvedValue(
+      new Map([['WMT', { rsi14: 64.2, ma50: 100, ma200: 88, vol30: 18.5 }]]),
+    )
   })
 
   afterEach(() => wrapper?.unmount())
@@ -117,5 +121,14 @@ describe('PositionsView (AG Grid)', () => {
     await koCell().trigger('click')
     await settle()
     expect(w.findAll('.ag-full-width-row')).toHaveLength(0)
+  })
+
+  it('shows current technicals against the live price', async () => {
+    const w = await mountGrid()
+    const wmt = w.findAll('.ag-row').find((row) => row.find('[col-id="symbol"]').text() === 'WMT')!
+
+    expect(wmt.find('[col-id="rsi14"]').text()).toBe('64.2')
+    expect(wmt.find('[col-id="vsMa50"]').text()).toBe('+10.0%') // last 110 vs 100
+    expect(wmt.find('[col-id="vol30"]').text()).toBe('18.5%')
   })
 })

@@ -1,9 +1,19 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import type { Trade } from '@/api/trades'
 import { useBlotterStore } from '@/stores/blotter'
 import BlotterTable from '../BlotterTable.vue'
+import type { DatedTechnicals } from '@/api/bloomberg'
+
+// Technicals at trade time come from Bloomberg (bdh); never call DeskLink from tests.
+const bloomberg = vi.hoisted(() => ({
+  fetchTechnicalsHistory:
+    vi.fn<
+      (symbols: string[], from: string, to: string) => Promise<Map<string, DatedTechnicals[]>>
+    >(),
+}))
+vi.mock('@/api/bloomberg', () => bloomberg)
 
 function trade(id: number, symbol: string, side: Trade['side'], minute: number): Trade {
   return {
@@ -21,6 +31,8 @@ describe('BlotterTable (AG Grid)', () => {
   let wrapper: VueWrapper | undefined
 
   beforeEach(() => {
+    bloomberg.fetchTechnicalsHistory.mockReset()
+    bloomberg.fetchTechnicalsHistory.mockResolvedValue(new Map())
     setActivePinia(createPinia())
     useBlotterStore().trades = [
       trade(1, 'MSFT', 'Buy', 0),
@@ -122,5 +134,32 @@ describe('BlotterTable (AG Grid)', () => {
     expect(input.classes()).toContain('invalid')
     expect(input.attributes('title')).toBe('">" needs a value after it')
     expect(symbols(w)).toEqual(['AAPL', 'TSLA', 'MSFT'])
+  })
+
+  it('shows Bloomberg technicals as they stood on each trade date, and filters on them', async () => {
+    bloomberg.fetchTechnicalsHistory.mockResolvedValue(
+      new Map([
+        // Trades are booked 2026-10-24 (New York); the 23rd is the last bar before them.
+        ['AAPL', [{ date: '2026-10-23', rsi14: 72.4, ma50: 0.5, ma200: 2, vol30: 30 }]],
+        ['MSFT', [{ date: '2026-10-23', rsi14: 28, ma50: 1, ma200: 1, vol30: 20 }]],
+      ]),
+    )
+    const w = await mountGrid()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    const cell = (symbol: string, column: string) =>
+      w
+        .findAll('.ag-row')
+        .find((row) => row.find('[col-id="symbol"]').text() === symbol)!
+        .find(`[col-id="${column}"]`)
+
+    expect(bloomberg.fetchTechnicalsHistory).toHaveBeenCalledTimes(1)
+    expect(cell('AAPL', 'rsi14').text()).toBe('72.4')
+    expect(cell('AAPL', 'rsi14').classes()).toContain('rsi-high')
+    expect(cell('AAPL', 'vsMa50').text()).toBe('+100.0%') // price 1 vs average 0.5
+    expect(cell('AAPL', 'vsMa200').text()).toBe('−50.0%')
+    expect(cell('TSLA', 'rsi14').text()).toBe('—') // no Bloomberg history for TSLA
+
+    await filter(w, 'RSI', '<30')
+    expect(symbols(w)).toEqual(['MSFT'])
   })
 })

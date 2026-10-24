@@ -22,7 +22,7 @@ type Predicate = (value: unknown) => boolean
 
 /** Short hint shown in an empty filter input. */
 export const FILTER_PLACEHOLDER: Record<FilterKind, string> = {
-  number: '>5, 5|6',
+  number: '>5',
   text: 'ko|pep',
   date: '2026-09',
 }

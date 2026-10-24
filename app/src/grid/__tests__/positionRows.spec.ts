@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { IRowNode } from 'ag-grid-community'
+import { NO_TECHNICALS, type TechnicalColumns } from '@/utils/technicals'
 import type { ValuedPosition } from '@/utils/valuePositions'
 import { keepDetailUnderParent, toGridRows, type PositionGridRow } from '../positionRows'
 
-const position = (symbol: string): ValuedPosition => ({
+const position = (symbol: string): ValuedPosition & TechnicalColumns => ({
+  ...NO_TECHNICALS,
   symbol,
   name: null,
   netQuantity: 1,

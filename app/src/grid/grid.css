@@ -148,3 +148,21 @@
   transform: rotate(90deg);
   color: var(--color-accent);
 }
+
+/* ---------- technicals column group ---------- */
+.grid .group-technicals {
+  color: var(--color-accent);
+}
+
+.grid .rsi-high,
+.grid .rsi-low {
+  font-weight: 700;
+}
+
+.grid .rsi-high {
+  color: var(--color-sell);
+}
+
+.grid .rsi-low {
+  color: var(--color-buy);
+}

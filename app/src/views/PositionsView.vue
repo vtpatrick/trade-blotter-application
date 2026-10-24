@@ -5,6 +5,7 @@ import { AgGridVue } from 'ag-grid-vue3'
 import type {
   CellClassParams,
   ColDef,
+  ColGroupDef,
   GridApi,
   GridReadyEvent,
   RowClassParams,
@@ -12,9 +13,11 @@ import type {
   RowHeightParams,
 } from 'ag-grid-community'
 import { useLiveQuotes } from '@/composables/useLiveQuotes'
+import { useCurrentTechnicals } from '@/composables/useTechnicals'
 import { expressionFilter } from '@/grid/expressionFilter'
 import PositionDetailRow, { type DetailRowContext } from '@/grid/PositionDetailRow.vue'
 import { keepDetailUnderParent, toGridRows, type PositionGridRow } from '@/grid/positionRows'
+import { technicalColumnGroup } from '@/grid/technicalColumns'
 import { gridTheme } from '@/grid/theme'
 import { useBlotterStore } from '@/stores/blotter'
 import {
@@ -24,6 +27,7 @@ import {
   formatSignedAmount,
   formatSignedPercent,
 } from '@/utils/format'
+import { technicalColumns } from '@/utils/technicals'
 import { summarize, valuePositions, type ValuedPosition } from '@/utils/valuePositions'
 
 const { positions, loading } = storeToRefs(useBlotterStore())
@@ -33,7 +37,18 @@ const { quotes, status, error, updatedAt } = useLiveQuotes(() =>
   positions.value.map((p) => p.symbol),
 )
 
-const valued = computed(() => valuePositions(positions.value, quotes.value).rows)
+// Current Bloomberg technicals, refreshed every few minutes (they move slowly).
+const { technicals, status: technicalsStatus } = useCurrentTechnicals(() =>
+  positions.value.map((p) => p.symbol),
+)
+
+/** Positions marked to the live price, with the technicals measured against that price. */
+const valued = computed(() =>
+  valuePositions(positions.value, quotes.value).rows.map((row) => ({
+    ...row,
+    ...technicalColumns(row.last, technicals.value.get(row.symbol)),
+  })),
+)
 
 // ---------- expandable rows ----------
 const expanded = ref(new Set<string>())
@@ -81,7 +96,7 @@ const num = (
     ...extra,
   }) as ColDef<PositionGridRow>
 
-const columnDefs: ColDef<PositionGridRow>[] = [
+const columnDefs: (ColDef<PositionGridRow> | ColGroupDef<PositionGridRow>)[] = [
   {
     colId: 'expand',
     headerName: '',
@@ -107,8 +122,7 @@ const columnDefs: ColDef<PositionGridRow>[] = [
   {
     field: 'name',
     headerName: 'Name',
-    minWidth: 140,
-    flex: 1,
+    width: 190,
     cellClass: 'cell-muted',
     valueFormatter: (p) => p.value ?? (p.node?.rowPinned ? '' : '—'),
     ...expressionFilter<PositionGridRow>('text', (r) => r.name),
@@ -143,6 +157,10 @@ const columnDefs: ColDef<PositionGridRow>[] = [
     cellClassRules: { gain: (p) => pnlClass(p) === 'gain', loss: (p) => pnlClass(p) === 'loss' },
     enableCellChangeFlash: true,
   }),
+  technicalColumnGroup<PositionGridRow>(
+    'Technicals · Bloomberg',
+    'Current Bloomberg technicals; the averages are compared with the live price',
+  ),
 ]
 
 const defaultColDef: ColDef<PositionGridRow> = { sortable: true, resizable: true }
@@ -230,7 +248,12 @@ const priceNote = computed(() => {
           Clear filters
         </button>
       </p>
-      <p class="price-note" :class="status" :title="error ?? undefined">{{ priceNote }}</p>
+      <p class="price-note" :class="status" :title="error ?? undefined">
+        {{ priceNote }}
+        <span v-if="technicalsStatus === 'unavailable'" class="unavailable-note">
+          · technicals unavailable
+        </span>
+      </p>
     </header>
 
     <section class="summary" aria-label="Portfolio totals">
@@ -335,6 +358,7 @@ h1 {
   color: var(--color-text-muted);
 }
 
+.unavailable-note,
 .price-note.unavailable {
   color: var(--color-danger);
 }
