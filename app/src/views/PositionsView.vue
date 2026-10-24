@@ -89,10 +89,9 @@ const num = (
   ({
     field,
     headerName,
-    // Share the width, each column capped, so spare space collects before the pinned technicals.
+    // Share all the width up to the technicals pinned on the right; no gap between the blocks.
     flex: 1,
     minWidth: width + 12,
-    maxWidth: width + 64,
     cellClass: 'cell-num',
     headerClass: 'cell-num',
     ...expressionFilter<PositionGridRow>('number', (r) => r[field]),
@@ -119,7 +118,6 @@ const columnDefs: (ColDef<PositionGridRow> | ColGroupDef<PositionGridRow>)[] = [
     headerName: 'Symbol',
     flex: 0.8,
     minWidth: 88,
-    maxWidth: 130,
     sort: 'asc',
     cellClass: 'cell-symbol',
     ...expressionFilter<PositionGridRow>('text', (r) => r.symbol),
@@ -129,7 +127,6 @@ const columnDefs: (ColDef<PositionGridRow> | ColGroupDef<PositionGridRow>)[] = [
     headerName: 'Name',
     flex: 1.8,
     minWidth: 180,
-    maxWidth: 300,
     cellClass: 'cell-muted',
     valueFormatter: (p) => p.value ?? (p.node?.rowPinned ? '' : '—'),
     ...expressionFilter<PositionGridRow>('text', (r) => r.name),
