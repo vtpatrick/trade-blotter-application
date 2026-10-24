@@ -6,7 +6,7 @@ derived from the trade history. Built for the exercise in [docs/trade-blotter-ex
 | Folder | Contents |
 | ------ | -------- |
 | `api/` | C# / ASP.NET Core Web API on .NET 8: EF Core + SQLite, SignalR, xUnit tests |
-| `app/` | Vue 3 (Composition API) + TypeScript + Vite, Pinia, Vitest |
+| `app/` | Vue 3 (Composition API) + TypeScript + Vite, Pinia, AG Grid Community, Vitest |
 | `docs/` | Exercise brief, architecture notes, design decisions |
 | `claude/` | How AI (Claude Code) was used, including the session transcript |
 
@@ -37,7 +37,7 @@ From the repo root, in two terminals:
 .\run_app.ps1   # App  -> http://localhost:5173
 ```
 
-Open <http://localhost:5173>. In development the blotter starts with a simulated book of 29 trades (see
+Open <http://localhost:5173>. In development the blotter starts with a simulated year of 103 trades (see
 [Seed data](#seed-data)); book more and open a second browser window to see them arrive live.
 
 | Script | Options |
@@ -67,9 +67,9 @@ npm run build                 # type-check + production build
 ## Seed data
 
 So the blotter and positions panel open on something realistic, an empty database in **Development** is loaded
-with a simulated three-month book: study 35's "standing pair" from my `trading-strategies` research (every month,
+with a simulated one-year book: study 35's "standing pair" from my `trading-strategies` research (every month,
 in each of six peer groups such as T/VZ/TMUS and WMT/TGT/COST, long the 60-day laggard and short the leader),
-filled at real Interactive Brokers daily closes from July to September 2026. It produces opens, resizes, flips
+filled at real Interactive Brokers daily closes at each month end from October 2025 to September 2026. It produces opens, resizes, flips
 through zero and closes, which exercises every branch of the position logic.
 
 - The trades: `api/src/TradeBlotter.Api/Data/Seed/peer-pairs-trades.json`; every rebalance, explained:
@@ -95,8 +95,20 @@ Bloomberg lives on the user's desk, so live prices are fetched **by the browser*
   payout and ex-date, 52-week range, beta. It also has a 1Y–5Y daily price chart with the position's average cost
   and its trades (▲ buy, ▼ sell). History is one 5-year `bdh` request per symbol per session.
 
-Both the blotter and the Positions page have quick filters (symbol search plus Buy/Sell and period, or Long/Short
-and gainers/losers). On the Positions page the totals follow the filter.
+The blotter and Positions tables are **AG Grid Community** grids with spreadsheet-height rows. Columns sort, resize and
+move. Positions rows expand into a full-width panel with the security description (DES-style fields), your trades in
+that symbol (each with the position it left) and the price chart. Live-price cells flash when they change.
+
+Both grids have a **filter row under the column headers**: type in any column, and the columns combine with AND.
+Each input takes a small expression language (`app/src/utils/columnFilter.ts`). Hover an input for its syntax, and an
+invalid expression turns red and is ignored rather than emptying the table. On the Positions page the summary cards
+and totals follow the filters.
+
+| Column type | Examples |
+| --- | --- |
+| Numbers | `5`, `>5`, `<=-100`, `!0`, `10..20`, `5\|6` (either), `>5&<10` (both), `>5&<10\|0` (`&` binds tighter) |
+| Text | `ko` (contains), `=ko` (exactly), `!t` (doesn't contain), `ko\|pep` |
+| Dates (blotter Time) | `2026`, `2026-09`, `2026-09-30`, `>=2026-09-01`, `2026-01..2026-03` |
 
 DeskLink's cache (`mode: "auto"`, 15-second freshness) fronts Bloomberg to spare the data budget. DeskLink must list
 the app's origin (`http://localhost:5173`) under **Hosting > Allowed hosts**. Without DeskLink or a Bloomberg session
@@ -140,8 +152,14 @@ More detail in [docs/decisions.md](docs/decisions.md) and [docs/architecture.md]
   The brief does not forbid it, and rejecting it would need a position check on every trade.
 - **Positions are always derived, never stored.** `GET /api/positions` replays the trade history through
   `PositionCalculator`, a pure function with no database access, which keeps it easy to test.
-- **Whole shares and positive prices only.** Quantity is a positive integer and price a positive decimal. Direction
-  comes from `side`, never from a negative quantity.
+- **Trade is valid by construction.** Its only constructor rejects a malformed symbol, an undefined side, a
+  quantity or price of zero or less, and a missing timestamp. Properties cannot be changed afterwards. The API also
+  validates the request, to give a friendly 400 per field; the domain type is the guarantee underneath, and EF Core
+  loads stored rows through the same constructor.
+- **Quantity is always positive; direction comes only from `side`** (as in FIX). "Buy −200" is rejected rather than
+  read as a short. A short is the position you end up in after selling more than you hold, so it is booked as
+  "Sell 200". Allowing a sign too would give every trade two spellings, and let a stray minus sign book the
+  opposite of the side the trader picked.
 - **The server assigns the timestamp** (UTC) when a trade is booked. Trades are immutable; there is no amend or cancel.
 - **Symbols are normalized to upper case** and must start with a letter (letters, digits, `.` and `-`, up to 12
   characters, so `BRK.B` works). They are not checked against a security master.
@@ -175,8 +193,8 @@ More detail in [docs/decisions.md](docs/decisions.md) and [docs/architecture.md]
 **Tooling**
 - **SQLite via EF Core**, with a committed migration applied at startup, so there is no database setup step.
 - **Seed data is generated, not hand-written**, from a real strategy and real closes, and committed as a plain JSON
-  file so a reviewer needs no market-data access. Corporate-action-adjusted history (FDX, around the FedEx Freight
-  spin-off) is detected and kept out of fill prices.
+  file so a reviewer needs no market-data access. Corporate-action-adjusted history is detected and never used as a fill price; that is why
+  FedEx (back-adjusted for the 2026 FedEx Freight spin-off) is not in the book.
 - **The dev scripts are Windows PowerShell**, matching the author's environment. The project itself is
   cross-platform (see the commands above).
 

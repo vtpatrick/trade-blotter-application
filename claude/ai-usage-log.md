@@ -209,6 +209,95 @@ Claude Sonnet 5.5 for the README, `docs/` and this log.
   - The dark theme for the new panel and chart.
   - Phone-width layout of the expanded panel.
 
+### 10. Trade invariants (after the author questioned `required`)
+- **The author asked:** "why in trade.cs is only symbol required?"
+- **Claude's answer:** `required` was there only to satisfy the compiler's nullable check on a string. Value-type
+  properties defaulted silently, so `new Trade { Symbol = "AAPL" }` compiled as a trade with zero quantity, zero
+  price and no time.
+- **The author pushed back:** shouldn't "Buy −200" just mean "short 200"? Claude explained why quantity stays
+  positive with direction from the side (as in FIX), and that a short is a resulting position, booked as a sell.
+  The author agreed.
+- **Committed first:** the earlier work went in as three commits (seed data, frontend, docs), at the author's request.
+- **Claude did:** gave `Trade` a validating constructor and immutable properties, and switched the controller,
+  seeder and tests to it. It added 14 `TradeTests`, including that "Buy −200" is rejected.
+- **Problem found:**
+  - EF Core refused the entity, because it does not map getter-only properties; only the explicitly configured
+    ones were bound.
+  - Fixed with `private init` accessors.
+  - `dotnet ef migrations has-pending-model-changes` confirmed there is no schema change.
+- **Verified by running:** 39 API tests passed. They include saving and reading trades through SQLite, which uses
+  the constructor.
+- **Not verified:** the author's running `dotnet watch` session on the new code. A constructor change needs a
+  restart (Ctrl+R).
+
+### 11. A year of seed trades; column filters with expressions
+- **Correction from the author:**
+  - The author wanted a year of trades, not three months.
+  - By "quick filters" they meant inputs under the column headers that accept expressions (`>5`, `5|6`), not
+    chip buttons.
+- **Seed:**
+  - Claude extended the generator to 12 month ends (Oct 2025 to Sep 2026) with 2 years of IBKR history.
+  - The adjusted-price guard then stopped the run: FDX fills before June 2026 would have used back-adjusted
+    prices that never printed. Claude swapped the Parcel group (UPS/FDX) for Card networks (V/MA/AXP) and noted
+    why in the generator, README and decision 14.
+  - Result: 103 trades. API tests still pass, including the 6-long/6-short check.
+- **Filters:**
+  - `utils/columnFilter.ts`, a small expression language: `|`, `&`, comparisons, `!`, ranges, and dates at the
+    precision typed.
+  - `useColumnFilters`, which combines columns with AND and ignores invalid expressions.
+  - A filter row under the headers of both tables. The blotter's whole header is now sticky.
+  - The chip component was removed. Tests: 48 for the expression syntax, and the table tests were rewritten.
+    The frontend total is 106.
+- **Verified in a real browser:**
+  - Typed into the actual inputs: `>1000`, `f|gm` and `2026-08` on the blotter, and an invalid `>` (turns red,
+    shows the reason).
+  - `<0` with `>0` on Positions, where the totals follow the filter.
+- **Not done:** reloading the author's dev database. It still holds the old 30 trades (29 seed plus one AAPL
+  trade the author booked), and the seed only loads into an empty database.
+
+### 12. Filter spacing; Status tab removed
+- **Filter spacing:**
+  - "add gaps between them". Claude's first padding change had no effect: the tables' scoped `th { padding: 0 }`
+    had the same specificity and loaded later.
+  - Claude spotted this in its own screenshot and fixed it with a more specific `thead .filter-row th`.
+  - Re-checked by screenshot: the inputs now line up with their columns, with clear gaps.
+- **Status tab:** "remove status tab". Claude removed the route, the nav link and `StatusView.vue`. The API
+  health badge stays, as plain text now rather than a link, and its tooltip lists each health check.
+- **Verified by running:** lint, type-check, 106 frontend tests and the build.
+
+### 13. AG Grid, a denser layout, Bloomberg status in the ticket, trade history in expanded rows
+- **Asked for:**
+  - "ag grid like functionality", "thinner like excel rows", "everything to be tighter … this does not say business".
+  - Then: no gap under expanded rows; show when Bloomberg is unavailable in the ticket; show the symbol's
+    historical trades when a position is expanded.
+  - Then: a coherent commit history.
+- **Claude did:**
+  - Adopted AG Grid Community 36.2.0, pinned exactly, with a dense theme driven by the app's tokens and 24px rows.
+  - Plugged the expression filter into AG Grid's filter API. Claude read the installed type definitions to get
+    `enableFilterHandlers` right rather than working from memory.
+  - Expanded positions are full-width rows that size themselves to their content.
+  - A density pass across the app.
+  - A DeskLink Bloomberg status check in the ticket.
+  - A trade history panel in the expanded position, showing the position left after each trade.
+- **Problems found:**
+  - The floating filter's params lack `colDef`, which crashed it on mount. Claude found the cause from the
+    browser console, through the DevTools protocol.
+  - The filter input never received model updates: the grid uses `refresh()`. Tests caught this as "Clear
+    filters" leaving stale text.
+  - The totals row was missing on first load, because `modelUpdated` fired before `gridReady`.
+  - The pinned-row class name differs in this AG Grid version.
+  - Pinned columns hid the long/short row edge.
+- **Commit mistake:** Claude's "Enforce Trade invariants" commit accidentally included two deletions that were
+  already staged (`StatusView.vue`, `QuickFilter.vue`), leaving the app unbuildable at that commit. Neither commit
+  had been pushed, so Claude reset them, kept the working tree, and rebuilt the history as one change per commit.
+- **Verified by running:**
+  - Browser screenshots: both grids, an expanded GM row (338px of content in a 340px row) and its 3 trades.
+  - The blotter filter in the real grid: `gm` gives 3 of 30.
+  - Lint, type-check, the build, and 111 frontend tests (three consecutive green runs).
+- **Not verified:**
+  - Dark mode with the grid.
+  - The ticket's "unavailable" state with DeskLink actually stopped. It's covered only by a unit test.
+
 ---
 
 ## Author review

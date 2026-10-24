@@ -51,16 +51,22 @@ app/src/
 ├── stores/
 │   ├── blotter.ts                     # trades, positions, live feed state, submit
 │   └── health.ts                      # API heartbeat polling
+├── grid/                              # AG Grid setup shared by both grids
+│   ├── theme.ts                       # dense theme driven by the app's CSS colour tokens
+│   ├── expressionFilter.ts            # the expression syntax as an AG Grid column filter
+│   ├── ExpressionFilterInput.vue      # the input under each header
+│   ├── positionRows.ts                # expanded positions -> full-width detail rows
+│   └── PositionDetailRow.vue          # detail row; sizes itself to its content
 ├── components/
-│   ├── TradeEntryForm.vue
-│   ├── BlotterTable.vue               # sorting is local view state
+│   ├── TradeEntryForm.vue             # live Bloomberg price + availability
+│   ├── BlotterTable.vue               # AG Grid
 │   ├── PositionsPanel.vue
 │   ├── LiveFeedIndicator.vue
 │   └── ApiStatusIndicator.vue
 ├── utils/
 │   ├── validateTrade.ts               # pure, mirrors the server rules
 │   └── format.ts                      # number/time formatting
-├── views/ BlotterView.vue, StatusView.vue
+├── views/ BlotterView.vue, PositionsView.vue
 └── App.vue                            # header; starts the blotter feed and health polling
 ```
 
@@ -101,7 +107,7 @@ Here `q` is the signed net quantity before the trade and `t` the trade's signed 
 ## Health
 
 `GET /api/health` aggregates registered ASP.NET Core health checks: `self` and `database` (EF Core can connect).
-The app polls it every 10 seconds for the header badge and the `/status` page. `HealthResponse` is mirrored by hand in
+The app polls it every 10 seconds for the header badge, whose tooltip lists each check. `HealthResponse` is mirrored by hand in
 `app/src/api/health.ts`, and the trade contracts in `app/src/api/trades.ts`.
 
 ## Environments
