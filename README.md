@@ -10,6 +10,29 @@ derived from the trade history. Built for the exercise in [docs/trade-blotter-ex
 | `docs/` | Exercise brief, architecture notes, design decisions |
 | `claude/` | How AI (Claude Code) was used, including the session transcript |
 
+## Quick start
+
+1. Install the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and [Node.js](https://nodejs.org/) 24 LTS.
+2. Clone the repo and open two terminals in its root folder.
+3. Start the API in one terminal and the app in the other:
+
+   **Windows (PowerShell)**
+   ```powershell
+   .\run_api.ps1
+   .\run_app.ps1
+   ```
+
+   **macOS / Linux (or Windows without the scripts)**
+   ```bash
+   cd api && dotnet watch run --project src/TradeBlotter.Api --launch-profile http
+   cd app && npm ci && npm run dev
+   ```
+4. Open <http://localhost:5173>.
+
+The API listens on <http://localhost:5035> (Swagger UI at `/swagger`). NuGet and npm packages install automatically,
+and the SQLite database is created, migrated and seeded with a year of sample trades on first start. No database
+server, market-data access or other setup is needed. Details and options follow.
+
 ## How to run the project locally
 
 ### Prerequisites
@@ -156,6 +179,26 @@ requests.
 ## Assumptions and design decisions
 
 More detail in [docs/decisions.md](docs/decisions.md) and [docs/architecture.md](docs/architecture.md).
+
+### Key design choices
+
+- **Typed filters in an AG Grid-style table.** I built the blotter as an AG Grid table, the kind of grid traders
+  already work in: dense rows, sortable, resizable and movable columns, and a filter box under every column header.
+  The filters are typed expressions rather than dropdowns, so a trader can type `>1000` on Quantity, `ko|pep` on
+  Symbol, `2026-09` on Time, or combine conditions with `&`. Columns combine with AND, and an invalid expression is
+  flagged and ignored instead of emptying the grid.
+- **Every trade field is required.** A trade must have a symbol, a side, a quantity, a price and a timestamp. The
+  API rejects a request with any field missing (a `400` naming each one), and the `Trade` domain type cannot be
+  created without all five valid values. Quantity is always positive and the side alone gives the direction, so
+  "Buy -200" is rejected rather than treated as a short.
+- **Desktop data in a remotely hosted app, shown and then set aside.** As a demonstration of bringing data from a
+  user's desktop into a web app hosted elsewhere, I added a Positions page and live Bloomberg calls. They are made
+  from the browser to DeskLink on the user's own machine, never through the server: live prices and P&L, a DES-style
+  security panel, price history charts and Bloomberg technicals. To keep the app on the brief's original focus (trade
+  entry, the blotter and positions), these are hidden. The Positions page is not linked from the header (it is
+  still reachable at `/positions`), and the technicals columns are hidden in the grids. The trade ticket's live
+  price lookup is the one visible piece. On a machine without DeskLink it reports "Live prices unavailable" and
+  everything else works normally.
 
 **Domain**
 - **Positions use the weighted average cost method.** Buys into a long (or sells into a short) re-average the cost.
