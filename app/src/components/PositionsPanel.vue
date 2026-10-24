@@ -50,10 +50,10 @@ table {
 }
 
 th {
-  padding: 0.55rem 1rem;
+  padding: 0.25rem 0.65rem;
   border-bottom: 1px solid var(--color-border);
   text-align: left;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: var(--color-text-muted);
 }
@@ -63,7 +63,8 @@ th.num {
 }
 
 td {
-  padding: 0.45rem 1rem;
+  padding: 0.12rem 0.65rem;
+  font-size: 0.8rem;
   border-bottom: 1px solid var(--color-border);
   white-space: nowrap;
 }

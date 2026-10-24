@@ -23,7 +23,7 @@ const RANGES = [1, 2, 3, 5] as const
 const years = ref<(typeof RANGES)[number]>(1)
 
 // ---------- size ----------
-const HEIGHT = 260
+const HEIGHT = 250
 const M = { top: 12, right: 58, bottom: 24, left: 8 }
 const frame = useTemplateRef<HTMLDivElement>('frame')
 const width = ref(640)

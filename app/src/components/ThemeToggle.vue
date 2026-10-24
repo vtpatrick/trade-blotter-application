@@ -36,8 +36,8 @@ const label = computed(() =>
 .theme-toggle {
   display: inline-grid;
   place-items: center;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 1.45rem;
+  height: 1.45rem;
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: 999px;
@@ -52,8 +52,8 @@ const label = computed(() =>
 }
 
 svg {
-  width: 1.05rem;
-  height: 1.05rem;
+  width: 0.8rem;
+  height: 0.8rem;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;

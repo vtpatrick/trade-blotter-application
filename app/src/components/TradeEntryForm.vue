@@ -199,25 +199,25 @@ async function onSubmit() {
 <style scoped>
 .fields {
   display: grid;
-  gap: 0.85rem;
-  padding: 1rem;
+  gap: 0.45rem;
+  padding: 0.5rem 0.65rem 0.6rem;
 }
 
 .row {
   display: grid;
   /* minmax(0, …): inputs have a wide intrinsic size that would otherwise overflow narrow screens. */
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: 0.45rem;
 }
 
 .field {
   display: grid;
-  gap: 0.3rem;
+  gap: 0.15rem;
   align-content: start;
 }
 
 .label {
-  font-size: 0.8rem;
+  font-size: 0.68rem;
   font-weight: 600;
   color: var(--color-text-muted);
 }
@@ -225,7 +225,8 @@ async function onSubmit() {
 input:not([type='radio']) {
   width: 100%;
   min-width: 0;
-  padding: 0.5rem 0.65rem;
+  height: 1.7rem;
+  padding: 0 0.45rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface-muted);
@@ -244,9 +245,9 @@ input[aria-invalid='true'] {
 .live-quote {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  min-height: 1.9rem;
-  padding: 0.2rem 0.2rem 0.2rem 0.6rem;
+  gap: 0.4rem;
+  min-height: 1.5rem;
+  padding: 0.1rem 0.15rem 0.1rem 0.45rem;
   border-radius: var(--radius);
   background: var(--color-surface-muted);
   font-size: 0.8rem;
@@ -297,13 +298,13 @@ input[aria-invalid='true'] {
 .side {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
+  gap: 0.35rem;
   border: 0;
   padding: 0;
 }
 
 .side legend {
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.15rem;
 }
 
 .side .field-error {
@@ -324,10 +325,11 @@ input[aria-invalid='true'] {
 
 .side-option span {
   display: block;
-  padding: 0.5rem;
+  padding: 0.22rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   text-align: center;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -355,9 +357,10 @@ input[aria-invalid='true'] {
 .notional {
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem 0.65rem;
+  padding: 0.2rem 0.45rem;
   border-radius: var(--radius);
   background: var(--color-surface-muted);
+  font-size: 0.78rem;
   color: var(--color-text-muted);
 }
 
@@ -366,7 +369,8 @@ input[aria-invalid='true'] {
 }
 
 .submit {
-  padding: 0.65rem;
+  padding: 0.35rem;
+  font-size: 0.8rem;
   border: 0;
   border-radius: var(--radius);
   background: var(--color-accent);
@@ -395,8 +399,8 @@ input[aria-invalid='true'] {
 }
 
 .booked {
-  min-height: 1.3em;
+  min-height: 1.2em;
   color: var(--color-text-muted);
-  font-size: 0.85rem;
+  font-size: 0.75rem;
 }
 </style>

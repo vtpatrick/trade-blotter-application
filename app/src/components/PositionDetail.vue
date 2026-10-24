@@ -186,8 +186,8 @@ const rangePosition = computed(() => {
 <style scoped>
 .detail {
   display: grid;
-  gap: 1.25rem;
-  padding: 1rem 1rem 1.25rem 1.5rem;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
   background: var(--color-surface-muted);
   white-space: normal;
 }
@@ -204,14 +204,14 @@ const rangePosition = computed(() => {
 }
 
 .name {
-  font-size: 0.95rem;
-  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
 }
 
 .range52 {
   display: grid;
-  gap: 0.25rem;
-  margin-bottom: 0.9rem;
+  gap: 0.15rem;
+  margin-bottom: 0.5rem;
 }
 
 .range-label,
@@ -251,7 +251,7 @@ const rangePosition = computed(() => {
 .groups {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.9rem 1.5rem;
+  gap: 0.5rem 1.25rem;
 }
 
 dl {
@@ -259,7 +259,7 @@ dl {
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.2rem 0.75rem;
   align-content: start;
-  font-size: 0.82rem;
+  font-size: 0.75rem;
 }
 
 .group-title {
@@ -281,7 +281,7 @@ dd {
 .fields,
 .history {
   min-width: 0;
-  padding: 0.9rem 1rem;
+  padding: 0.5rem 0.65rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);

@@ -34,17 +34,17 @@ const tooltip = computed(() => TOOLTIPS[liveState.value])
 .feed {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.25rem 0.75rem;
+  gap: 0.35rem;
+  padding: 0.05rem 0.5rem;
   border: 1px solid var(--color-border);
   border-radius: 999px;
-  font-size: 0.85rem;
+  font-size: 0.72rem;
   white-space: nowrap;
 }
 
 .dot {
-  width: 0.6rem;
-  height: 0.6rem;
+  width: 0.45rem;
+  height: 0.45rem;
   border-radius: 50%;
   background: var(--status-color);
 }
