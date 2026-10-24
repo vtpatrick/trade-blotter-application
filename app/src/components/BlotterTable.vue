@@ -12,6 +12,7 @@ import type {
 import type { Trade } from '@/api/trades'
 import { useTradeTechnicals } from '@/composables/useTechnicals'
 import { expressionFilter } from '@/grid/expressionFilter'
+import { spacerColumn } from '@/grid/spacerColumn'
 import { technicalColumnGroup } from '@/grid/technicalColumns'
 import { gridTheme } from '@/grid/theme'
 import { useBlotterStore } from '@/stores/blotter'
@@ -98,6 +99,7 @@ const columnDefs: (ColDef<TradeRow> | ColGroupDef<TradeRow>)[] = [
     valueFormatter: (p) => formatAmount(p.value),
     ...expressionFilter<TradeRow>('number', (t) => t.notional),
   },
+  spacerColumn<TradeRow>(),
   technicalColumnGroup<TradeRow>(
     'At trade · Bloomberg',
     'Bloomberg technicals on the trade date (the last close before it for a trade booked today)',

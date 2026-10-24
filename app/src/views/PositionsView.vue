@@ -15,6 +15,7 @@ import type {
 import { useLiveQuotes } from '@/composables/useLiveQuotes'
 import { useCurrentTechnicals } from '@/composables/useTechnicals'
 import { expressionFilter } from '@/grid/expressionFilter'
+import { spacerColumn } from '@/grid/spacerColumn'
 import PositionDetailRow, { type DetailRowContext } from '@/grid/PositionDetailRow.vue'
 import { keepDetailUnderParent, toGridRows, type PositionGridRow } from '@/grid/positionRows'
 import { technicalColumnGroup } from '@/grid/technicalColumns'
@@ -161,6 +162,7 @@ const columnDefs: (ColDef<PositionGridRow> | ColGroupDef<PositionGridRow>)[] = [
     cellClassRules: { gain: (p) => pnlClass(p) === 'gain', loss: (p) => pnlClass(p) === 'loss' },
     enableCellChangeFlash: true,
   }),
+  spacerColumn<PositionGridRow>(),
   technicalColumnGroup<PositionGridRow>(
     'Technicals · Bloomberg',
     'Current Bloomberg technicals; the averages are compared with the live price',
