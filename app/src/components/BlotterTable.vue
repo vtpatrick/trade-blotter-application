@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import type { Trade } from '@/api/trades'
+import type { Trade, TradeSide } from '@/api/trades'
 import { useBlotterStore } from '@/stores/blotter'
+import QuickFilter from './QuickFilter.vue'
 import { formatAmount, formatPrice, formatQuantity, formatTimestamp } from '@/utils/format'
 
 type SortKey = 'timestamp' | 'symbol' | 'side' | 'quantity' | 'price' | 'notional'
@@ -52,10 +53,63 @@ function compare(a: Trade, b: Trade, key: SortKey): number {
   }
 }
 
+// ---------- quick filters ----------
+const search = ref('')
+const side = ref<'all' | TradeSide>('all')
+const period = ref<'all' | 'today' | '7d' | '30d'>('all')
+
+const SIDES = [
+  { value: 'all', label: 'All' },
+  { value: 'Buy', label: 'Buy' },
+  { value: 'Sell', label: 'Sell' },
+] as const
+const PERIODS = [
+  { value: 'all', label: 'All time' },
+  { value: 'today', label: 'Today' },
+  { value: '7d', label: '7D' },
+  { value: '30d', label: '30D' },
+] as const
+
+/** Earliest timestamp the period lets through (local midnight for "today"). */
+function periodStart(p: typeof period.value): number {
+  if (p === 'all') return -Infinity
+  const start = new Date()
+  start.setHours(0, 0, 0, 0)
+  if (p === '7d') start.setDate(start.getDate() - 6)
+  if (p === '30d') start.setDate(start.getDate() - 29)
+  return start.getTime()
+}
+
+const filteredTrades = computed(() => {
+  const term = search.value.trim().toUpperCase()
+  const from = periodStart(period.value)
+  return trades.value.filter(
+    (t) =>
+      (!term || t.symbol.includes(term)) &&
+      (side.value === 'all' || t.side === side.value) &&
+      Date.parse(t.timestamp) >= from,
+  )
+})
+
+const isFiltered = computed(
+  () => search.value.trim() !== '' || side.value !== 'all' || period.value !== 'all',
+)
+
+const countLabel = computed(() => {
+  const total = `${trades.value.length} ${trades.value.length === 1 ? 'trade' : 'trades'}`
+  return isFiltered.value ? `${filteredTrades.value.length} of ${total}` : total
+})
+
+function clearFilters() {
+  search.value = ''
+  side.value = 'all'
+  period.value = 'all'
+}
+
 const sortedTrades = computed(() => {
   const sign = sortDirection.value === 'asc' ? 1 : -1
   // Ties fall back to newest first so equal values stay in a predictable order.
-  return [...trades.value].sort(
+  return [...filteredTrades.value].sort(
     (a, b) => sign * compare(a, b, sortKey.value) || compare(b, a, 'timestamp'),
   )
 })
@@ -70,8 +124,23 @@ function ariaSort(column: Column) {
   <section class="card blotter">
     <h2 class="card-title">
       <span>Blotter</span>
-      <span class="count">{{ trades.length }} {{ trades.length === 1 ? 'trade' : 'trades' }}</span>
+      <span class="count">{{ countLabel }}</span>
     </h2>
+
+    <div class="filter-bar filters">
+      <input
+        v-model="search"
+        class="filter-search"
+        type="search"
+        placeholder="Filter symbol"
+        aria-label="Filter trades by symbol"
+      />
+      <QuickFilter v-model="side" label="Side" :options="SIDES" />
+      <QuickFilter v-model="period" label="Period" :options="PERIODS" />
+      <button v-if="isFiltered" type="button" class="filter-clear" @click="clearFilters">
+        Clear
+      </button>
+    </div>
 
     <div class="scroll">
       <table>
@@ -112,8 +181,14 @@ function ariaSort(column: Column) {
         </tbody>
       </table>
 
-      <p v-if="trades.length === 0" class="empty">
-        {{ loading ? 'Loading trades…' : 'No trades yet. Book one with the ticket.' }}
+      <p v-if="sortedTrades.length === 0" class="empty">
+        {{
+          loading
+            ? 'Loading trades…'
+            : isFiltered
+              ? 'No trades match the filters.'
+              : 'No trades yet. Book one with the ticket.'
+        }}
       </p>
     </div>
   </section>
@@ -124,6 +199,11 @@ function ariaSort(column: Column) {
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+.filters {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .count {

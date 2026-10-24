@@ -10,6 +10,11 @@ const router = createRouter({
       component: BlotterView,
     },
     {
+      path: '/positions',
+      name: 'positions',
+      component: () => import('../views/PositionsView.vue'),
+    },
+    {
       path: '/status',
       name: 'status',
       component: () => import('../views/StatusView.vue'),

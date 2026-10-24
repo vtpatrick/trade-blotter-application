@@ -25,3 +25,15 @@ export function formatTimestamp(iso: string, now = new Date()): string {
   const time = timeFormat.format(date)
   return date.toDateString() === now.toDateString() ? time : `${dateFormat.format(date)} ${time}`
 }
+
+/** Amount with an explicit sign, for P&L: +1,234.50 / −1,234.50. */
+export function formatSignedAmount(value: number): string {
+  const text = amountFormat.format(Math.abs(value))
+  return value > 0 ? `+${text}` : value < 0 ? `−${text}` : text
+}
+
+/** Percent with an explicit sign, to 2 decimals: +1.25% / −0.40%. */
+export function formatSignedPercent(value: number): string {
+  const text = `${Math.abs(value).toFixed(2)}%`
+  return value > 0 ? `+${text}` : value < 0 ? `−${text}` : text
+}

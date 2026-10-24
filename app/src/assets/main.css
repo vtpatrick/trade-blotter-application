@@ -19,26 +19,26 @@
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Consolas, monospace;
 
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: #0f1216;
-    --color-surface: #171b21;
-    --color-surface-muted: #1e232b;
-    --color-border: #2b313a;
-    --color-text: #e6e9ee;
-    --color-text-muted: #95a0ae;
-    --color-accent: #5b8ff9;
-    --color-danger: #ff6b6b;
+/* Light is the default; dark is opt-in via the header toggle (stores/theme.ts). */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-background: #0f1216;
+  --color-surface: #171b21;
+  --color-surface-muted: #1e232b;
+  --color-border: #2b313a;
+  --color-text: #e6e9ee;
+  --color-text-muted: #95a0ae;
+  --color-accent: #5b8ff9;
+  --color-danger: #ff6b6b;
 
-    --color-buy: #3fcf8e;
-    --color-buy-bg: rgba(63, 207, 142, 0.14);
-    --color-sell: #ff6b6b;
-    --color-sell-bg: rgba(255, 107, 107, 0.14);
-    --color-flash: rgba(255, 214, 10, 0.18);
-  }
+  --color-buy: #3fcf8e;
+  --color-buy-bg: rgba(63, 207, 142, 0.14);
+  --color-sell: #ff6b6b;
+  --color-sell-bg: rgba(255, 107, 107, 0.14);
+  --color-flash: rgba(255, 214, 10, 0.18);
 }
 
 *,
@@ -67,6 +67,22 @@ button,
 input {
   font: inherit;
   color: inherit;
+}
+
+/* Anything clickable shows the hand cursor; components do not need to remember it. */
+button:not(:disabled),
+[role='button'],
+a[href],
+label:has(> input[type='radio']),
+input[type='radio'],
+input[type='checkbox'],
+select,
+summary {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 :focus-visible {
@@ -104,4 +120,35 @@ input {
   padding: 2rem 1rem;
   text-align: center;
   color: var(--color-text-muted);
+}
+
+/* Quick filter row: search box plus chip groups, one line above the content it filters. */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.filter-search {
+  width: 12rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  font-size: 0.85rem;
+}
+
+.filter-count {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.filter-clear {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 0.8rem;
+  color: var(--color-accent);
 }

@@ -3,6 +3,7 @@ import { onMounted, onUnmounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import ApiStatusIndicator from './components/ApiStatusIndicator.vue'
 import LiveFeedIndicator from './components/LiveFeedIndicator.vue'
+import ThemeToggle from './components/ThemeToggle.vue'
 import { useBlotterStore } from './stores/blotter'
 import { useHealthStore } from './stores/health'
 
@@ -26,12 +27,14 @@ onUnmounted(() => {
 
     <nav>
       <RouterLink to="/">Blotter</RouterLink>
+      <RouterLink to="/positions">Positions</RouterLink>
       <RouterLink to="/status">Status</RouterLink>
     </nav>
 
     <div class="indicators">
       <LiveFeedIndicator />
       <ApiStatusIndicator />
+      <ThemeToggle />
     </div>
   </header>
 
@@ -75,6 +78,7 @@ nav a.router-link-exact-active {
 
 .indicators {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
   margin-left: auto;
 }

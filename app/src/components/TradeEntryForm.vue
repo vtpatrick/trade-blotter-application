@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, reactive, ref, useTemplateRef, watch } from 'vue'
 import { TradeRejectedError, type Trade } from '@/api/trades'
+import { useLiveQuote } from '@/composables/useLiveQuote'
 import { useBlotterStore } from '@/stores/blotter'
-import { formatAmount, formatPrice, formatQuantity } from '@/utils/format'
+import { formatAmount, formatPrice, formatQuantity, formatSignedPercent } from '@/utils/format'
 import { validateTrade, type TradeForm, type TradeFormErrors } from '@/utils/validateTrade'
 
 const blotter = useBlotterStore()
@@ -29,6 +30,13 @@ watch(form, () => {
   serverErrors.value = {}
   formError.value = null
 })
+
+// Live Bloomberg price for the symbol being typed (debounced; see useLiveQuote).
+const { quote, status: quoteStatus, error: quoteError } = useLiveQuote(() => form.symbol)
+
+function useLivePrice() {
+  if (quote.value) form.price = String(quote.value.last)
+}
 
 const notional = computed(() => {
   const quantity = Number(form.quantity)
@@ -105,6 +113,33 @@ async function onSubmit() {
           aria-describedby="trade-symbol-error"
         />
         <p v-if="errors.symbol" id="trade-symbol-error" class="field-error">{{ errors.symbol }}</p>
+
+        <div
+          v-if="quoteStatus !== 'idle'"
+          class="live-quote"
+          :class="quoteStatus"
+          aria-live="polite"
+        >
+          <template v-if="quoteStatus === 'loading'">Looking up live price…</template>
+          <template v-else-if="quoteStatus === 'ready' && quote">
+            <span class="quote-name" :title="quote.name">{{ quote.name }}</span>
+            <span class="num quote-last">{{ formatPrice(quote.last) }}</span>
+            <span
+              v-if="quote.changePercent !== null"
+              class="num quote-change"
+              :class="quote.changePercent >= 0 ? 'up' : 'down'"
+            >
+              {{ formatSignedPercent(quote.changePercent) }}
+            </span>
+            <button type="button" class="use-price" @click="useLivePrice">Use</button>
+          </template>
+          <template v-else-if="quoteStatus === 'not-found'">
+            No Bloomberg security for {{ form.symbol.trim().toUpperCase() }}
+          </template>
+          <template v-else>
+            <span :title="quoteError ?? undefined">Live price unavailable</span>
+          </template>
+        </div>
       </div>
 
       <div class="row">
@@ -206,6 +241,55 @@ input[aria-invalid='true'] {
   letter-spacing: 0.04em;
 }
 
+.live-quote {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.9rem;
+  padding: 0.2rem 0.2rem 0.2rem 0.6rem;
+  border-radius: var(--radius);
+  background: var(--color-surface-muted);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.quote-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-last {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.quote-change.up {
+  color: var(--color-buy);
+}
+
+.quote-change.down {
+  color: var(--color-sell);
+}
+
+.use-price {
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.use-price:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
 .symbol-input::placeholder {
   text-transform: none;
 }
@@ -234,6 +318,8 @@ input[aria-invalid='true'] {
   position: absolute;
   opacity: 0;
   inset: 0;
+  /* The invisible radio sits on top of the visible button, so it is what the mouse is over. */
+  cursor: pointer;
 }
 
 .side-option span {

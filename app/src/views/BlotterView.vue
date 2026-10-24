@@ -21,7 +21,9 @@ const { loadError, loading } = storeToRefs(blotter)
       <PositionsPanel />
     </aside>
 
-    <BlotterTable class="main" />
+    <div class="main">
+      <BlotterTable />
+    </div>
   </div>
 </template>
 
@@ -31,7 +33,7 @@ const { loadError, loading } = storeToRefs(blotter)
   /* minmax(0, …) lets the blotter scroll inside its card instead of widening the page. */
   grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 .side {
@@ -68,9 +70,21 @@ const { loadError, loading } = storeToRefs(blotter)
     grid-column: 1 / -1;
   }
 
-  .side {
-    position: sticky;
-    top: 1rem;
+  /* The blotter ends where the ticket and positions column ends: the left column sets the row
+     height, the blotter fills it and scrolls inside. */
+  .main {
+    position: relative;
+    min-height: 30rem;
+  }
+
+  .main > :deep(.blotter) {
+    position: absolute;
+    inset: 0;
+  }
+
+  .main :deep(.scroll) {
+    flex: 1;
+    max-height: none;
   }
 }
 </style>

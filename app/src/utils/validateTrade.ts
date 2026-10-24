@@ -13,7 +13,7 @@ export type TradeFormErrors = Partial<Record<keyof TradeForm, string>>
 export type TradeValidation = { ok: true; trade: NewTrade } | { ok: false; errors: TradeFormErrors }
 
 // Same rules as CreateTradeRequest on the API.
-const SYMBOL_PATTERN = /^[A-Z][A-Z0-9.-]{0,11}$/
+export const SYMBOL_PATTERN = /^[A-Z][A-Z0-9.-]{0,11}$/
 const MAX_QUANTITY = 2_147_483_647
 const MAX_PRICE = 1_000_000_000
 

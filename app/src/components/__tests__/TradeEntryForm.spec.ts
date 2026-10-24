@@ -1,9 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
+import type { LiveQuote } from '@/api/bloomberg'
 import { TradeRejectedError, type Trade } from '@/api/trades'
 import { useBlotterStore } from '@/stores/blotter'
 import TradeEntryForm from '../TradeEntryForm.vue'
+
+// The ticket looks up a live Bloomberg price as the symbol is typed; never hit DeskLink in tests.
+const bloomberg = vi.hoisted(() => ({
+  fetchLiveQuote: vi.fn<(symbol: string, signal?: AbortSignal) => Promise<LiveQuote | null>>(),
+}))
+vi.mock('@/api/bloomberg', () => bloomberg)
 
 const booked: Trade = {
   id: 1,
@@ -21,6 +28,7 @@ describe('TradeEntryForm', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     submitTrade = vi.spyOn(useBlotterStore(), 'submitTrade').mockResolvedValue(booked)
+    bloomberg.fetchLiveQuote.mockResolvedValue(null)
   })
 
   async function fill(wrapper: ReturnType<typeof mount>, symbol: string, qty: string, px: string) {
@@ -74,5 +82,32 @@ describe('TradeEntryForm', () => {
     await flushPromises()
 
     expect(wrapper.find('#trade-price-error').text()).toBe('Price must be greater than 0.')
+  })
+
+  it('shows the live price for the typed symbol and fills it on "Use"', async () => {
+    vi.useFakeTimers()
+    try {
+      bloomberg.fetchLiveQuote.mockResolvedValue({
+        symbol: 'KO',
+        name: 'COCA-COLA CO/THE',
+        last: 92.71,
+        changePercent: 0.42,
+        asOf: '2026-10-24T13:36:39Z',
+      })
+      const wrapper = mount(TradeEntryForm)
+
+      await wrapper.find('#trade-symbol').setValue('ko')
+      await vi.advanceTimersByTimeAsync(400)
+
+      const live = wrapper.find('.live-quote')
+      expect(live.text()).toContain('COCA-COLA CO/THE')
+      expect(live.text()).toContain('92.71')
+      expect(live.text()).toContain('+0.42%')
+
+      await live.find('button.use-price').trigger('click')
+      expect((wrapper.find('#trade-price').element as HTMLInputElement).value).toBe('92.71')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

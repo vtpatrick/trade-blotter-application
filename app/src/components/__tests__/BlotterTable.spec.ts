@@ -57,4 +57,35 @@ describe('BlotterTable', () => {
     expect(rows[0]!.find('.side-badge').text()).toBe('Sell')
     expect(rows[1]!.classes()).toContain('buy')
   })
+
+  it('filters by symbol and side, and says how many are shown', async () => {
+    const wrapper = mount(BlotterTable)
+    const chip = (label: string) =>
+      wrapper.findAll('.quick-filter button').find((b) => b.text() === label)!
+
+    await chip('Buy').trigger('click')
+    expect(symbols(wrapper)).toEqual(['TSLA', 'MSFT'])
+    expect(wrapper.find('.count').text()).toContain('2 of 3 trades')
+
+    await wrapper.find('.filter-search').setValue('ms')
+    expect(symbols(wrapper)).toEqual(['MSFT'])
+
+    await wrapper.find('.filter-clear').trigger('click')
+    expect(symbols(wrapper)).toEqual(['AAPL', 'TSLA', 'MSFT'])
+  })
+
+  it('filters by period', async () => {
+    useBlotterStore().trades = [
+      { ...trade(1, 'OLD', 'Buy', 0), timestamp: '2020-01-15T15:00:00Z' },
+      { ...trade(2, 'NOW', 'Sell', 0), timestamp: new Date().toISOString() },
+    ]
+    const wrapper = mount(BlotterTable)
+
+    await wrapper
+      .findAll('.quick-filter button')
+      .find((b) => b.text() === 'Today')!
+      .trigger('click')
+
+    expect(symbols(wrapper)).toEqual(['NOW'])
+  })
 })
