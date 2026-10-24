@@ -89,17 +89,21 @@ Bloomberg lives on the user's desk, so live prices are fetched **by the browser*
 - **The trade ticket:** as a symbol is typed, it waits for a 350 ms pause, then shows the Bloomberg name, last
   price and day change, with **Use** to copy the price into the ticket. A new symbol aborts the lookup in flight,
   so a slow answer for an earlier symbol is never shown.
-- **The Positions page** (`/positions`): every open position marked to last price, with market value,
+- **The Positions page** (`/positions`; built but not linked from the header for now, while the app focuses on the
+  blotter; the blotter page keeps its positions panel): every open position marked to last price, with market value,
   unrealized and day P&L, and totals (long, short, net and gross exposure). One batched request every 15 seconds.
   Click a row to expand it into a DES-style panel: sector, market cap, P/E, P/B, EV/EBITDA, dividend yield,
   payout and ex-date, 52-week range, beta. It also has a 1Y–5Y daily price chart with the position's average cost
   and its trades (▲ buy, ▼ sell). History is one 5-year `bdh` request per symbol per session.
 
 The blotter and Positions tables are **AG Grid Community** grids with spreadsheet-height rows. Columns sort, resize and
-move. Positions rows expand into a full-width panel with the security description (DES-style fields), your trades in
+move, and always fill the grid exactly: they start at equal widths, a column you drag keeps its width while the others
+absorb the difference, and the blotter never grows wider than the screen (no sideways scroll). The content area is
+centred in the window, up to 1440px wide. Positions rows expand into a full-width panel with the security description (DES-style fields), your trades in
 that symbol (each with the position it left) and the price chart. Live-price cells flash when they change.
 
-Both grids end with **Bloomberg technicals**: RSI(14), price against the 50- and 200-day moving averages, and 30-day
+Both grids also carry **Bloomberg technicals** columns, **hidden for now** (the figures are still loaded, so they
+can be shown again by unhiding the columns in `app/src/grid/technicalColumns.ts`): RSI(14), price against the 50- and 200-day moving averages, and 30-day
 volatility. On the blotter they are the figures **on each trade's date** (one `bdh` request for every symbol, once
 per session). On Positions they are **current**, compared with the live price, and refreshed every 5 minutes
 through DeskLink's 15-minute cache. They filter like any number column: `<30` on RSI finds trades made while
@@ -118,9 +122,12 @@ and totals follow the filters.
 
 DeskLink's cache (`mode: "auto"`, 15-second freshness) fronts Bloomberg to spare the data budget. DeskLink must list
 the app's origin (`http://localhost:5173`) under **Hosting > Allowed hosts**. Without DeskLink or a Bloomberg session
-the app still works, and simply shows "Live price unavailable". Set `VITE_DESKLINK_URL` to use another address.
+the app still works, and simply shows "Live prices unavailable". Set `VITE_DESKLINK_URL` to use another address.
 
 ## API
+
+Each route is also served without the `/api` prefix, at the paths in the exercise brief (`POST /trades`,
+`GET /trades`, `GET /positions`). The app itself uses `/api`.
 
 | Method | Path | Result |
 | ------ | ---- | ------ |
@@ -173,8 +180,8 @@ More detail in [docs/decisions.md](docs/decisions.md) and [docs/architecture.md]
   display only (prices to 2 to 4 decimal places, notional to 2).
 
 **API**
-- **Endpoints sit under `/api`** (`/api/trades` rather than the brief's `/trades`) so the frontend dev server can
-  proxy one prefix and the API needs no CORS setup.
+- **Endpoints sit under `/api`** so the frontend dev server can proxy one prefix and the API needs no CORS setup.
+  The brief's paths (`/trades`, `/positions`) are served too, so the API can be exercised exactly as specified.
 - **Validation errors are standard `ValidationProblemDetails`** with a message per field, which the form shows next to
   the matching input. `side` must be exactly `Buy` or `Sell`; numeric enum values are rejected.
 - **`POST` returns the created trade**, so the submitting browser can show it immediately without waiting for the live

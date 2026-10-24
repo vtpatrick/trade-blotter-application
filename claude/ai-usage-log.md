@@ -314,6 +314,37 @@ Claude Sonnet 5.5 for the README, `docs/` and this log.
     shows as oversold, and MA's RSI of 70.0 shows as overbought.
   - Lint, type-check, and 118 tests in two runs.
 
+### 15. Grid width, hidden technicals, centred layout, the brief's endpoint paths
+- **Asked for:**
+  - Whitespace gone for good, row borders continuous, Bloomberg set apart, columns evenly distributed, resizing
+    never reopening a gap, and the blotter never wider than the screen.
+  - Then: a 50px gap, the group header row removed, the Positions link removed, the Bloomberg columns hidden
+    (keeping the calls, with no toggle), and the content centred.
+  - Then: a check against the exercise brief.
+- **What went wrong first:**
+  - Claude went through several patch attempts: column caps, then fixed widths, then pinning.
+  - The author called out "you going half effort".
+  - The root cause was pinning, which splits the grid into separate sections, so any width shortfall left a blank
+    band.
+- **Fix:**
+  - No pinning, so all columns sit in one section.
+  - Equal starting widths, scaled to fit.
+  - Each column the user drags keeps its width, and one column is always left free to absorb the remainder.
+  - An overflow check releases the oldest user width or trims the latest.
+  - The grid refits on creation, data change, resize and drag.
+  - Measured in a real browser by dragging columns (shrink, widen, a +900px over-widen) and resizing the window
+    (1900, 1300 and 1000px). The blotter filled the grid exactly in every case except 1000px, where the
+    since-hidden Bloomberg columns pushed the minimums over.
+  - Claude also used a switch constant to hide the technicals; the author said "no toggle", so the columns are now
+    simply `hide: true`.
+- **Brief check:**
+  - Every required feature was present.
+  - The gaps found were the transcript (not yet in the repo), no public repo, a stale README and uncommitted work.
+  - The brief's literal paths (`/trades`, `/positions`) returned 404 because of the `/api` prefix. Claude added them
+    as aliases, with a test.
+- **Verified by running:** 118 frontend tests, 40 API tests, lint and type-check.
+- **Known issue:** the unlinked Positions page still overflows its grid by about 16px at 1900px.
+
 ---
 
 ## Author review
