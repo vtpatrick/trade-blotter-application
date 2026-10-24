@@ -12,7 +12,7 @@ export const gridTheme = themeQuartz.withParams({
   rowHeight: 24,
   headerHeight: 26,
   spacing: 4,
-  cellHorizontalPadding: 8,
+  cellHorizontalPadding: 12,
   iconSize: 12,
 
   backgroundColor: 'var(--color-surface)',

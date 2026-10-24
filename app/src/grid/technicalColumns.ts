@@ -35,6 +35,8 @@ export function technicalColumnGroup<T extends TechnicalColumns>(
       headerName: header,
       headerTooltip: tooltip,
       width,
+      // Bloomberg's figures sit at the right edge, apart from the trade or position data.
+      pinned: 'right',
       cellClass: 'cell-num',
       headerClass: 'cell-num',
       ...expressionFilter<T>('number', (row) => row[field]),
@@ -49,7 +51,7 @@ export function technicalColumnGroup<T extends TechnicalColumns>(
       column(
         'rsi14',
         'RSI',
-        56,
+        68,
         'RSI, 14-day. 70 and above is overbought, 30 and below oversold.',
         {
           valueFormatter: show((v) => v.toFixed(1)),
@@ -59,15 +61,15 @@ export function technicalColumnGroup<T extends TechnicalColumns>(
           },
         },
       ),
-      column('vsMa50', 'vs 50D', 66, 'Price against the 50-day moving average', {
+      column('vsMa50', 'vs 50D', 80, 'Price against the 50-day moving average', {
         valueFormatter: show(signed1),
         cellClassRules: signClasses,
       }),
-      column('vsMa200', 'vs 200D', 70, 'Price against the 200-day moving average', {
+      column('vsMa200', 'vs 200D', 84, 'Price against the 200-day moving average', {
         valueFormatter: show(signed1),
         cellClassRules: signClasses,
       }),
-      column('vol30', 'Vol 30D', 66, '30-day historical volatility, annualised', {
+      column('vol30', 'Vol 30D', 80, '30-day historical volatility, annualised', {
         valueFormatter: show((v) => `${v.toFixed(1)}%`),
       }),
     ],

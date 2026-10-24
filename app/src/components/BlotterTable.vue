@@ -41,7 +41,9 @@ const columnDefs: (ColDef<TradeRow> | ColGroupDef<TradeRow>)[] = [
     headerName: 'Time',
     field: 'timestamp',
     sort: 'desc',
-    width: 132,
+    flex: 1.4,
+    minWidth: 140,
+    maxWidth: 210,
     cellClass: 'cell-mono cell-muted',
     valueFormatter: (p) => (p.value ? formatTimestamp(p.value) : ''),
     tooltipValueGetter: (p) => (p.value ? new Date(p.value).toLocaleString() : ''),
@@ -52,14 +54,18 @@ const columnDefs: (ColDef<TradeRow> | ColGroupDef<TradeRow>)[] = [
   {
     headerName: 'Symbol',
     field: 'symbol',
-    width: 76,
+    flex: 1,
+    minWidth: 84,
+    maxWidth: 140,
     cellClass: 'cell-symbol',
     ...expressionFilter<TradeRow>('text', (t) => t.symbol),
   },
   {
     headerName: 'Side',
     field: 'side',
-    width: 74,
+    flex: 0.8,
+    minWidth: 76,
+    maxWidth: 110,
     // Values are only ever Buy or Sell (validated by the API), so the markup is safe.
     cellRenderer: (p: { value: Trade['side'] }) =>
       `<span class="side-badge ${p.value === 'Buy' ? 'buy' : 'sell'}">${p.value === 'Buy' ? 'Buy' : 'Sell'}</span>`,
@@ -68,7 +74,9 @@ const columnDefs: (ColDef<TradeRow> | ColGroupDef<TradeRow>)[] = [
   {
     headerName: 'Quantity',
     field: 'quantity',
-    width: 96,
+    flex: 1,
+    minWidth: 100,
+    maxWidth: 160,
     cellClass: 'cell-num',
     headerClass: 'cell-num',
     valueFormatter: (p) => formatQuantity(p.value),
@@ -77,7 +85,9 @@ const columnDefs: (ColDef<TradeRow> | ColGroupDef<TradeRow>)[] = [
   {
     headerName: 'Price',
     field: 'price',
-    width: 96,
+    flex: 1,
+    minWidth: 100,
+    maxWidth: 160,
     cellClass: 'cell-num',
     headerClass: 'cell-num',
     valueFormatter: (p) => formatPrice(p.value),
@@ -86,7 +96,9 @@ const columnDefs: (ColDef<TradeRow> | ColGroupDef<TradeRow>)[] = [
   {
     headerName: 'Notional',
     field: 'notional',
-    width: 112,
+    flex: 1.2,
+    minWidth: 120,
+    maxWidth: 180,
     cellClass: 'cell-num',
     headerClass: 'cell-num',
     valueFormatter: (p) => formatAmount(p.value),
@@ -98,6 +110,8 @@ const columnDefs: (ColDef<TradeRow> | ColGroupDef<TradeRow>)[] = [
   ),
 ]
 
+// Trade columns share the width (each capped so numbers don't float in huge cells); the
+// Bloomberg group is pinned to the right edge, so any spare space sits between the two.
 const defaultColDef: ColDef<TradeRow> = { sortable: true, resizable: true }
 
 const api = shallowRef<GridApi<TradeRow>>()
