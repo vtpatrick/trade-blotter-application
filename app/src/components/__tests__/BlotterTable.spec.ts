@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import type { Trade } from '@/api/trades'
 import { useBlotterStore } from '@/stores/blotter'
@@ -17,10 +17,11 @@ function trade(id: number, symbol: string, side: Trade['side'], minute: number):
   }
 }
 
-describe('BlotterTable', () => {
+describe('BlotterTable (AG Grid)', () => {
+  let wrapper: VueWrapper | undefined
+
   beforeEach(() => {
-    const pinia = createPinia()
-    setActivePinia(pinia)
+    setActivePinia(createPinia())
     useBlotterStore().trades = [
       trade(1, 'MSFT', 'Buy', 0),
       trade(2, 'AAPL', 'Sell', 5),
@@ -28,64 +29,98 @@ describe('BlotterTable', () => {
     ]
   })
 
-  const symbols = (wrapper: ReturnType<typeof mount>) =>
-    wrapper.findAll('tbody td.symbol').map((td) => td.text())
+  afterEach(() => wrapper?.unmount())
 
-  it('shows newest trades first by default', () => {
-    const wrapper = mount(BlotterTable)
+  async function mountGrid() {
+    wrapper = mount(BlotterTable, { attachTo: document.body })
+    await flushPromises()
+    return wrapper
+  }
 
-    expect(symbols(wrapper)).toEqual(['AAPL', 'TSLA', 'MSFT'])
-    expect(wrapper.find('th[aria-sort="descending"]').text()).toContain('Time')
+  /** Symbols of the displayed rows, top to bottom. */
+  const symbols = (w: VueWrapper) =>
+    w
+      .findAll('.ag-row')
+      .sort((a, b) => Number(a.attributes('row-index')) - Number(b.attributes('row-index')))
+      .map((row) => row.find('[col-id="symbol"]').text())
+
+  async function filter(w: VueWrapper, column: string, expression: string) {
+    await w.find(`input[aria-label="Filter ${column}"]`).setValue(expression)
+    await flushPromises()
+    await new Promise((resolve) => setTimeout(resolve, 50))
+  }
+
+  it('shows newest trades first by default', async () => {
+    const w = await mountGrid()
+
+    expect(symbols(w)).toEqual(['AAPL', 'TSLA', 'MSFT'])
   })
 
-  it('sorts by a column on click and reverses on a second click', async () => {
-    const wrapper = mount(BlotterTable)
-    const symbolHeader = wrapper.findAll('th button').find((b) => b.text().startsWith('Symbol'))!
+  it('sorts by a column on header click, and reverses on a second click', async () => {
+    const w = await mountGrid()
+    const header = () => w.find('.ag-header-cell[col-id="symbol"] .ag-header-cell-label')
 
-    await symbolHeader.trigger('click')
-    expect(symbols(wrapper)).toEqual(['AAPL', 'MSFT', 'TSLA'])
+    await header().trigger('click')
+    await flushPromises()
+    expect(symbols(w)).toEqual(['AAPL', 'MSFT', 'TSLA'])
 
-    await symbolHeader.trigger('click')
-    expect(symbols(wrapper)).toEqual(['TSLA', 'MSFT', 'AAPL'])
+    await header().trigger('click')
+    await flushPromises()
+    expect(symbols(w)).toEqual(['TSLA', 'MSFT', 'AAPL'])
   })
 
-  it('marks each row and badge with its side', () => {
-    const wrapper = mount(BlotterTable)
-    const rows = wrapper.findAll('tbody tr')
+  it('marks each row edge and badge with its side', async () => {
+    const w = await mountGrid()
+    const row = (index: number) => w.find(`.ag-row[row-index="${index}"]`)
 
-    expect(rows[0]!.classes()).toContain('sell')
-    expect(rows[0]!.find('.side-badge').text()).toBe('Sell')
-    expect(rows[1]!.classes()).toContain('buy')
+    expect(row(0).classes()).toContain('edge-sell')
+    expect(row(0).find('.side-badge').text()).toBe('Sell')
+    expect(row(1).classes()).toContain('edge-buy')
   })
 
-  it('filters by symbol and side, and says how many are shown', async () => {
-    const wrapper = mount(BlotterTable)
-    const chip = (label: string) =>
-      wrapper.findAll('.quick-filter button').find((b) => b.text() === label)!
+  it('filters with expressions typed under the headers, combined across columns', async () => {
+    const w = await mountGrid()
 
-    await chip('Buy').trigger('click')
-    expect(symbols(wrapper)).toEqual(['TSLA', 'MSFT'])
-    expect(wrapper.find('.count').text()).toContain('2 of 3 trades')
+    await filter(w, 'Side', '=buy')
+    expect(symbols(w)).toEqual(['TSLA', 'MSFT'])
+    expect(w.find('.count').text()).toContain('2 of 3 trades')
 
-    await wrapper.find('.filter-search').setValue('ms')
-    expect(symbols(wrapper)).toEqual(['MSFT'])
+    await filter(w, 'Symbol', 'ms|aapl')
+    expect(symbols(w)).toEqual(['MSFT'])
 
-    await wrapper.find('.filter-clear').trigger('click')
-    expect(symbols(wrapper)).toEqual(['AAPL', 'TSLA', 'MSFT'])
+    await w.find('.filter-clear').trigger('click')
+    await flushPromises()
+    expect(symbols(w)).toEqual(['AAPL', 'TSLA', 'MSFT'])
+    expect((w.find('input[aria-label="Filter Symbol"]').element as HTMLInputElement).value).toBe('')
   })
 
-  it('filters by period', async () => {
+  it('takes number and date expressions', async () => {
     useBlotterStore().trades = [
-      { ...trade(1, 'OLD', 'Buy', 0), timestamp: '2020-01-15T15:00:00Z' },
-      { ...trade(2, 'NOW', 'Sell', 0), timestamp: new Date().toISOString() },
+      { ...trade(1, 'OLD', 'Buy', 0), quantity: 5, timestamp: '2025-12-15T15:00:00Z' },
+      { ...trade(2, 'MID', 'Sell', 0), quantity: 6, timestamp: '2026-06-15T15:00:00Z' },
+      { ...trade(3, 'NEW', 'Buy', 0), quantity: 500, timestamp: '2026-09-15T15:00:00Z' },
     ]
-    const wrapper = mount(BlotterTable)
+    const w = await mountGrid()
 
-    await wrapper
-      .findAll('.quick-filter button')
-      .find((b) => b.text() === 'Today')!
-      .trigger('click')
+    await filter(w, 'Quantity', '5|6')
+    expect(symbols(w)).toEqual(['MID', 'OLD'])
 
-    expect(symbols(wrapper)).toEqual(['NOW'])
+    await filter(w, 'Quantity', '>5')
+    expect(symbols(w)).toEqual(['NEW', 'MID'])
+
+    await filter(w, 'Quantity', '')
+    await filter(w, 'Time', '<2026')
+    expect(symbols(w)).toEqual(['OLD'])
+  })
+
+  it('marks an invalid expression and ignores it instead of emptying the grid', async () => {
+    const w = await mountGrid()
+
+    await filter(w, 'Price', '>')
+    const input = w.find('input[aria-label="Filter Price"]')
+
+    expect(input.classes()).toContain('invalid')
+    expect(input.attributes('title')).toBe('">" needs a value after it')
+    expect(symbols(w)).toEqual(['AAPL', 'TSLA', 'MSFT'])
   })
 })

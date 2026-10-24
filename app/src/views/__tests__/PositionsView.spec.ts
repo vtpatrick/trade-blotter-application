@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import type { LiveQuote, PricePoint, SecurityProfile } from '@/api/bloomberg'
 import { useBlotterStore } from '@/stores/blotter'
@@ -20,7 +20,9 @@ const quote = (symbol: string, last: number): LiveQuote => ({
   asOf: '2026-10-24T13:35:16Z',
 })
 
-describe('PositionsView', () => {
+describe('PositionsView (AG Grid)', () => {
+  let wrapper: VueWrapper | undefined
+
   beforeEach(() => {
     setActivePinia(createPinia())
     useBlotterStore().positions = [
@@ -39,49 +41,81 @@ describe('PositionsView', () => {
     bloomberg.fetchPriceHistory.mockResolvedValue([])
   })
 
-  const symbols = (wrapper: ReturnType<typeof mount>) =>
-    wrapper.findAll('tr.position-row .symbol').map((td) => td.text())
-  const chip = (wrapper: ReturnType<typeof mount>, label: string) =>
-    wrapper.findAll('.quick-filter button').find((b) => b.text() === label)!
+  afterEach(() => wrapper?.unmount())
 
-  it('filters by direction and P&L, and the totals follow the filter', async () => {
-    const wrapper = mount(PositionsView)
+  /** Let Vue and the grid apply a change (the grid renders row changes asynchronously). */
+  async function settle() {
     await flushPromises()
-    expect(symbols(wrapper)).toEqual(['KO', 'PEP', 'WMT'])
+    await new Promise((resolve) => setTimeout(resolve, 20))
+  }
 
-    await chip(wrapper, 'Long').trigger('click')
-    expect(symbols(wrapper)).toEqual(['PEP', 'WMT'])
+  async function mountGrid() {
+    wrapper = mount(PositionsView, { attachTo: document.body })
+    await flushPromises()
+    await new Promise((resolve) => setTimeout(resolve)) // the recount after prices arrive
+    return wrapper
+  }
 
-    await chip(wrapper, 'Gainers').trigger('click')
-    expect(symbols(wrapper)).toEqual(['WMT'])
-    expect(wrapper.find('.filter-count').text()).toContain('Showing 1 of 3')
-    expect(wrapper.find('tfoot').text()).toContain('+500.00') // WMT only: (110 − 100) × 50
+  /** Symbols of the displayed position rows (not detail or pinned totals rows), top to bottom. */
+  const symbols = (w: VueWrapper) =>
+    w
+      .findAll('.ag-row')
+      .filter(
+        (row) =>
+          !row.classes().includes('ag-full-width-row') && !row.classes().includes('ag-row-pinned'),
+      )
+      .sort((a, b) => Number(a.attributes('row-index')) - Number(b.attributes('row-index')))
+      .map((row) => row.find('[col-id="symbol"]').text())
 
-    await wrapper.find('.filter-clear').trigger('click')
-    expect(symbols(wrapper)).toEqual(['KO', 'PEP', 'WMT'])
+  async function filter(w: VueWrapper, column: string, expression: string) {
+    await w.find(`input[aria-label="Filter ${column}"]`).setValue(expression)
+    await flushPromises()
+  }
+
+  it('lists positions marked to the live price, with a totals row', async () => {
+    const w = await mountGrid()
+
+    expect(symbols(w)).toEqual(['KO', 'PEP', 'WMT'])
+    // Unrealized: KO +500, PEP −1,000, WMT +500
+    expect(w.find('.ag-row-pinned').text()).toContain('0.00')
   })
 
-  it('searches by symbol or name', async () => {
-    const wrapper = mount(PositionsView)
-    await flushPromises()
+  it('filters with expressions, and the totals and summary follow the filter', async () => {
+    const w = await mountGrid()
 
-    await wrapper.find('.filter-search').setValue('pep corp')
-    expect(symbols(wrapper)).toEqual(['PEP'])
+    await filter(w, 'Net qty', '>0')
+    expect(symbols(w)).toEqual(['PEP', 'WMT'])
+
+    await filter(w, 'Unrl P&L', '>0')
+    expect(symbols(w)).toEqual(['WMT'])
+    expect(w.find('.filter-count').text()).toContain('Showing 1 of 3')
+    expect(w.find('.ag-row-pinned').text()).toContain('+500.00') // WMT: (110 − 100) × 50
+    expect(w.find('.summary').text()).toContain('+500.00')
+
+    await w.find('.filter-clear').trigger('click')
+    await flushPromises()
+    expect(symbols(w)).toEqual(['KO', 'PEP', 'WMT'])
   })
 
-  it('expands a row into its detail panel and collapses it again', async () => {
-    const wrapper = mount(PositionsView)
-    await flushPromises()
-    const toggle = wrapper.find('tr.position-row button.expand')
+  it('filters text columns with or', async () => {
+    const w = await mountGrid()
 
-    await toggle.trigger('click')
-    await flushPromises()
-    expect(toggle.attributes('aria-expanded')).toBe('true')
-    expect(wrapper.find('.detail-row').exists()).toBe(true)
+    await filter(w, 'Name', 'pep corp|wmt')
+    expect(symbols(w)).toEqual(['PEP', 'WMT'])
+  })
+
+  it('expands a row into a full-width detail row and collapses it again', async () => {
+    const w = await mountGrid()
+    const koCell = () => w.findAll('.ag-row [col-id="symbol"]').find((c) => c.text() === 'KO')!
+
+    await koCell().trigger('click')
+    await settle()
+    expect(w.findAll('.ag-full-width-row')).toHaveLength(1)
     expect(bloomberg.fetchSecurityProfile).toHaveBeenCalledWith('KO', expect.anything())
     expect(bloomberg.fetchPriceHistory).toHaveBeenCalledWith('KO')
 
-    await toggle.trigger('click')
-    expect(wrapper.find('.detail-row').exists()).toBe(false)
+    await koCell().trigger('click')
+    await settle()
+    expect(w.findAll('.ag-full-width-row')).toHaveLength(0)
   })
 })

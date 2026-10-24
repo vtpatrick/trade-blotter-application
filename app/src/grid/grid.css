@@ -1,0 +1,150 @@
+/* Shared AG Grid styling. Global, because the grid renders its own DOM outside component scopes. */
+
+.grid {
+  width: 100%;
+  height: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Numbers: monospace, right-aligned, aligned digits. */
+.grid .cell-num {
+  justify-content: flex-end;
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+.grid .ag-header-cell.cell-num .ag-header-cell-label {
+  flex-direction: row-reverse;
+}
+
+.grid .cell-mono {
+  font-family: var(--font-mono);
+}
+
+.grid .cell-symbol {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.grid .cell-muted {
+  color: var(--color-text-muted);
+}
+
+.grid .gain {
+  color: var(--color-buy);
+}
+
+.grid .loss {
+  color: var(--color-sell);
+}
+
+/* Buy/sell or long/short shown on the row's left edge, so runs read at a glance. */
+.grid .ag-row.edge-buy,
+.grid .ag-row.edge-sell {
+  box-shadow: inset 2px 0 0 var(--row-edge);
+}
+
+.grid .ag-row.edge-buy {
+  --row-edge: var(--color-buy);
+}
+
+.grid .ag-row.edge-sell {
+  --row-edge: var(--color-sell);
+}
+
+.grid .side-badge {
+  display: inline-block;
+  min-width: 2.6rem;
+  padding: 0 0.3rem;
+  border-radius: 2px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.grid .side-badge.buy {
+  background: var(--color-buy-bg);
+  color: var(--color-buy);
+}
+
+.grid .side-badge.sell {
+  background: var(--color-sell-bg);
+  color: var(--color-sell);
+}
+
+.grid .direction {
+  margin-left: 0.3rem;
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* Pinned totals row. */
+.grid .ag-row.ag-row-pinned {
+  font-weight: 700;
+  background: var(--color-surface-muted);
+}
+
+/* ---------- expression filter input (floating filter row) ---------- */
+.expression-filter {
+  width: 100%;
+  height: 18px;
+  padding: 0 0.3rem;
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text);
+}
+
+.expression-filter.number {
+  text-align: right;
+}
+
+.expression-filter::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+.expression-filter.active {
+  border-color: var(--color-accent);
+}
+
+.expression-filter.invalid {
+  border-color: var(--color-danger);
+  background: var(--color-sell-bg);
+}
+
+.expression-filter:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+/* ---------- Positions: expandable rows ---------- */
+.grid .ag-row.clickable {
+  cursor: pointer;
+}
+
+.grid .cell-expand {
+  display: flex;
+  justify-content: center;
+  padding: 0;
+}
+
+.grid .expand-chevron {
+  display: inline-block;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--color-text-muted);
+  transition: transform 0.12s ease;
+}
+
+.grid .expand-chevron.open {
+  transform: rotate(90deg);
+  color: var(--color-accent);
+}

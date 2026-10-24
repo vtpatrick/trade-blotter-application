@@ -32,14 +32,15 @@ const { loadError, loading } = storeToRefs(blotter)
   display: grid;
   /* minmax(0, …) lets the blotter scroll inside its card instead of widening the page. */
   grid-template-columns: minmax(0, 1fr);
-  gap: 1rem;
+  gap: 0.5rem;
   align-items: stretch;
 }
 
 .side {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 1rem;
+  gap: 0.5rem;
+  align-content: start;
 }
 
 .load-error {
@@ -63,7 +64,7 @@ const { loadError, loading } = storeToRefs(blotter)
 
 @media (min-width: 960px) {
   .layout {
-    grid-template-columns: 340px minmax(0, 1fr);
+    grid-template-columns: 290px minmax(0, 1fr);
   }
 
   .load-error {
@@ -74,17 +75,13 @@ const { loadError, loading } = storeToRefs(blotter)
      height, the blotter fills it and scrolls inside. */
   .main {
     position: relative;
-    min-height: 30rem;
+    min-height: 24rem;
   }
 
   .main > :deep(.blotter) {
     position: absolute;
     inset: 0;
-  }
-
-  .main :deep(.scroll) {
-    flex: 1;
-    max-height: none;
+    height: auto;
   }
 }
 </style>
