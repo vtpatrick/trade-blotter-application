@@ -20,36 +20,132 @@ that stays is resized back to $25,000 only if it has drifted by more than 5%.
 Fills are at the close; timestamps are 16:00 New York, a second apart to keep the tickets in order.
 This is a simulation for demonstration, not a record of real executions.
 
-**Adjusted history.** IBKR back-adjusts closes for corporate actions: FDX up to 2026-05-29. The 60-day rankings use those adjusted closes, which stay consistent across the event; every fill
-is dated after them, so each fill price is a close that actually printed (the generator refuses otherwise).
-
 | Group | Members |
 | --- | --- |
 | US telecoms | T, VZ, TMUS |
 | Big-box retail | WMT, TGT, COST |
-| Parcel | UPS, FDX |
+| Card networks | V, MA, AXP |
 | Home improvement | HD, LOW |
 | Soft drinks | KO, PEP |
 | US automakers | GM, F |
+
+## 2025-10-31
+
+| Group | Gap vs group (60d) | Laggard (long) | Leader (short) | Trades |
+| --- | --- | --- | --- | --- |
+| US telecoms | T -0.9%, VZ +3.5%, TMUS -2.6% | TMUS | VZ | Sell 629 VZ @ 39.74 (open)<br>Buy 119 TMUS @ 210.05 (open) |
+| Big-box retail | WMT +5.1%, TGT -5.3%, COST +0.2% | TGT | WMT | Sell 247 WMT @ 101.18 (open)<br>Buy 270 TGT @ 92.72 (open) |
+| Card networks | V -5.2%, MA -9.4%, AXP +14.6% | MA | AXP | Buy 45 MA @ 551.99 (open)<br>Sell 69 AXP @ 360.73 (open) |
+| Home improvement | HD -0.8%, LOW +0.8% | HD | LOW | Buy 66 HD @ 379.59 (open)<br>Sell 105 LOW @ 238.13 (open) |
+| Soft drinks | KO -1.8%, PEP +1.8% | KO | PEP | Buy 363 KO @ 68.9 (open)<br>Sell 171 PEP @ 146.09 (open) |
+| US automakers | GM +7.0%, F -7.0% | F | GM | Sell 362 GM @ 69.09 (open)<br>Buy 1904 F @ 13.13 (open) |
+
+## 2025-11-28
+
+| Group | Gap vs group (60d) | Laggard (long) | Leader (short) | Trades |
+| --- | --- | --- | --- | --- |
+| US telecoms | T -0.0%, VZ +5.1%, TMUS -5.1% | TMUS | VZ | none |
+| Big-box retail | WMT +8.6%, TGT -3.2%, COST -5.4% | COST | WMT | Buy 21 WMT @ 110.51 (resize)<br>Sell 270 TGT @ 90.62 (close)<br>Buy 27 COST @ 913.59 (open) |
+| Card networks | V -4.1%, MA -7.0%, AXP +11.1% | MA | AXP | none |
+| Home improvement | HD -2.5%, LOW +2.5% | HD | LOW | Buy 4 HD @ 356.92 (resize) |
+| Soft drinks | KO +2.9%, PEP -2.9% | PEP | KO | Sell 705 KO @ 73.12 (flip)<br>Buy 339 PEP @ 148.74 (flip) |
+| US automakers | GM +6.4%, F -6.4% | F | GM | Buy 22 GM @ 73.52 (resize) |
+
+## 2025-12-31
+
+| Group | Gap vs group (60d) | Laggard (long) | Leader (short) | Trades |
+| --- | --- | --- | --- | --- |
+| US telecoms | T +1.2%, VZ +3.4%, TMUS -4.6% | TMUS | VZ | none |
+| Big-box retail | WMT +4.1%, TGT +5.5%, COST -9.7% | COST | TGT | Buy 226 WMT @ 111.41 (close)<br>Sell 256 TGT @ 97.75 (open)<br>Buy 2 COST @ 862.34 (resize) |
+| Card networks | V -3.1%, MA -4.9%, AXP +7.9% | MA | AXP | none |
+| Home improvement | HD -5.7%, LOW +5.7% | HD | LOW | none |
+| Soft drinks | KO +1.5%, PEP -1.5% | PEP | KO | none |
+| US automakers | GM +18.2%, F -18.2% | F | GM | Buy 33 GM @ 81.32 (resize) |
+
+## 2026-01-30
+
+| Group | Gap vs group (60d) | Laggard (long) | Leader (short) | Trades |
+| --- | --- | --- | --- | --- |
+| US telecoms | T +1.3%, VZ +7.2%, TMUS -8.6% | TMUS | VZ | Buy 67 VZ @ 44.52 (resize)<br>Buy 8 TMUS @ 197.21 (resize) |
+| Big-box retail | WMT +6.0%, TGT +4.0%, COST -10.0% | COST | WMT | Sell 210 WMT @ 119.14 (open)<br>Buy 256 TGT @ 105.47 (close)<br>Sell 2 COST @ 940.25 (resize) |
+| Card networks | V -1.8%, MA +1.7%, AXP +0.1% | V | MA | Buy 78 V @ 321.83 (open)<br>Sell 91 MA @ 538.79 (flip)<br>Buy 69 AXP @ 352.17 (close) |
+| Home improvement | HD -7.2%, LOW +7.2% | HD | LOW | Buy 11 LOW @ 267.06 (resize) |
+| Soft drinks | KO +1.5%, PEP -1.5% | PEP | KO | none |
+| US automakers | GM +8.2%, F -8.2% | F | GM | Sell 103 F @ 13.88 (resize) |
+
+## 2026-02-27
+
+| Group | Gap vs group (60d) | Laggard (long) | Leader (short) | Trades |
+| --- | --- | --- | --- | --- |
+| US telecoms | T -3.6%, VZ +10.8%, TMUS -7.2% | TMUS | VZ | Buy 63 VZ @ 50.14 (resize)<br>Sell 12 TMUS @ 217.09 (resize) |
+| Big-box retail | WMT -2.0%, TGT +7.8%, COST -5.9% | COST | TGT | Buy 210 WMT @ 127.95 (close)<br>Sell 220 TGT @ 113.79 (open)<br>Sell 2 COST @ 1010.79 (resize) |
+| Card networks | V +4.3%, MA +2.5%, AXP -6.8% | AXP | V | Sell 156 V @ 320.14 (flip)<br>Buy 46 MA @ 517.21 (close)<br>Buy 81 AXP @ 308.9 (open) |
+| Home improvement | HD -0.4%, LOW +0.4% | HD | LOW | Sell 4 HD @ 380.72 (resize) |
+| Soft drinks | KO -0.1%, PEP +0.1% | KO | PEP | Buy 649 KO @ 81.56 (flip)<br>Sell 315 PEP @ 169.74 (flip) |
+| US automakers | GM +0.4%, F -0.4% | F | GM | none |
+
+## 2026-03-31
+
+| Group | Gap vs group (60d) | Laggard (long) | Leader (short) | Trades |
+| --- | --- | --- | --- | --- |
+| US telecoms | T +2.3%, VZ +8.2%, TMUS -10.5% | TMUS | VZ | none |
+| Big-box retail | WMT -5.6%, TGT +4.8%, COST +0.8% | WMT | TGT | Buy 201 WMT @ 124.28 (open)<br>Buy 14 TGT @ 121.2 (resize)<br>Sell 25 COST @ 996.43 (close) |
+| Card networks | V +1.5%, MA +3.0%, AXP -4.6% | AXP | MA | Buy 78 V @ 302.24 (close)<br>Sell 50 MA @ 499.66 (open) |
+| Home improvement | HD -0.3%, LOW +0.3% | HD | LOW | Buy 10 HD @ 328.89 (resize)<br>Sell 12 LOW @ 236.28 (resize) |
+| Soft drinks | KO +0.4%, PEP -0.4% | PEP | KO | Sell 636 KO @ 76.05 (flip)<br>Buy 308 PEP @ 155.29 (flip) |
+| US automakers | GM +2.7%, F -2.7% | F | GM | Sell 29 GM @ 74.5 (resize)<br>Buy 365 F @ 11.54 (resize) |
+
+## 2026-04-30
+
+| Group | Gap vs group (60d) | Laggard (long) | Leader (short) | Trades |
+| --- | --- | --- | --- | --- |
+| US telecoms | T -2.7%, VZ +3.8%, TMUS -1.1% | T | VZ | Buy 957 T @ 26.13 (open)<br>Sell 115 TMUS @ 195.5 (close) |
+| Big-box retail | WMT -4.6%, TGT +8.7%, COST -4.1% | WMT | TGT | Sell 12 WMT @ 131.93 (resize)<br>Buy 13 TGT @ 129.75 (resize) |
+| Card networks | V +5.6%, MA -3.3%, AXP -2.3% | MA | V | Sell 76 V @ 329.84 (open)<br>Buy 100 MA @ 502.92 (flip)<br>Sell 81 AXP @ 323.05 (close) |
+| Home improvement | HD -0.3%, LOW +0.3% | HD | LOW | none |
+| Soft drinks | KO +2.6%, PEP -2.6% | PEP | KO | none |
+| US automakers | GM +0.9%, F -0.9% | F | GM | none |
+
+## 2026-05-29
+
+| Group | Gap vs group (60d) | Laggard (long) | Leader (short) | Trades |
+| --- | --- | --- | --- | --- |
+| US telecoms | T -2.5%, VZ +5.3%, TMUS -2.7% | TMUS | VZ | Sell 957 T @ 24.8 (close)<br>Buy 133 TMUS @ 187.53 (open) |
+| Big-box retail | WMT -6.6%, TGT +8.7%, COST -2.1% | WMT | TGT | Buy 27 WMT @ 115.75 (resize) |
+| Card networks | V +2.5%, MA -4.9%, AXP +2.4% | MA | V | none |
+| Home improvement | HD +1.5%, LOW -1.5% | LOW | HD | Sell 155 HD @ 317.14 (flip)<br>Buy 223 LOW @ 214.36 (flip) |
+| Soft drinks | KO +6.6%, PEP -6.6% | PEP | KO | Buy 12 PEP @ 144.19 (resize) |
+| US automakers | GM -15.1%, F +15.1% | GM | F | Buy 636 GM @ 83.24 (flip)<br>Sell 3599 F @ 17.44 (flip) |
+
+## 2026-06-30
+
+| Group | Gap vs group (60d) | Laggard (long) | Leader (short) | Trades |
+| --- | --- | --- | --- | --- |
+| US telecoms | T -7.6%, VZ +5.0%, TMUS +2.6% | T | VZ | Buy 1208 T @ 20.7 (open)<br>Sell 91 VZ @ 42.34 (resize)<br>Sell 133 TMUS @ 167.73 (close) |
+| Big-box retail | WMT -6.8%, TGT +11.6%, COST -4.7% | WMT | TGT | none |
+| Card networks | V +3.8%, MA -6.2%, AXP +2.4% | MA | V | none |
+| Home improvement | HD +7.1%, LOW -7.1% | LOW | HD | Buy 8 HD @ 352.68 (resize) |
+| Soft drinks | KO +9.8%, PEP -9.8% | PEP | KO | Buy 21 KO @ 81.27 (resize)<br>Buy 12 PEP @ 135.4 (resize) |
+| US automakers | GM -6.8%, F +6.8% | GM | F | Buy 24 GM @ 77.08 (resize)<br>Sell 366 F @ 13.9 (resize) |
 
 ## 2026-07-31
 
 | Group | Gap vs group (60d) | Laggard (long) | Leader (short) | Trades |
 | --- | --- | --- | --- | --- |
-| US telecoms | T -2.7%, VZ +6.4%, TMUS -3.6% | TMUS | VZ | Sell 534 VZ @ 46.81 (open)<br>Buy 145 TMUS @ 172.71 (open) |
-| Big-box retail | WMT -11.9%, TGT +15.2%, COST -3.3% | WMT | TGT | Buy 225 WMT @ 111.2 (open)<br>Sell 173 TGT @ 144.49 (open) |
-| Parcel | UPS +0.5%, FDX -0.5% | FDX | UPS | Sell 240 UPS @ 104.22 (open)<br>Buy 81 FDX @ 307.4 (open) |
-| Home improvement | HD +6.5%, LOW -6.5% | LOW | HD | Sell 75 HD @ 331.96 (open)<br>Buy 120 LOW @ 207.81 (open) |
-| Soft drinks | KO +10.8%, PEP -10.8% | PEP | KO | Sell 285 KO @ 87.59 (open)<br>Buy 179 PEP @ 139.56 (open) |
-| US automakers | GM -4.4%, F +4.4% | GM | F | Buy 281 GM @ 88.86 (open)<br>Sell 1703 F @ 14.68 (open) |
+| US telecoms | T -2.7%, VZ +6.4%, TMUS -3.6% | TMUS | VZ | Sell 1208 T @ 23.25 (close)<br>Buy 56 VZ @ 46.81 (resize)<br>Buy 145 TMUS @ 172.71 (open) |
+| Big-box retail | WMT -11.9%, TGT +15.2%, COST -3.3% | WMT | TGT | Buy 20 TGT @ 144.49 (resize) |
+| Card networks | V +1.9%, MA +3.5%, AXP -5.4% | AXP | MA | Buy 76 V @ 366.13 (close)<br>Sell 94 MA @ 573.1 (flip)<br>Buy 74 AXP @ 336.25 (open) |
+| Home improvement | HD +6.5%, LOW -6.5% | LOW | HD | Sell 4 HD @ 331.96 (resize) |
+| Soft drinks | KO +10.8%, PEP -10.8% | PEP | KO | Buy 23 KO @ 87.59 (resize) |
+| US automakers | GM -4.4%, F +4.4% | GM | F | Sell 43 GM @ 88.86 (resize)<br>Buy 96 F @ 14.68 (resize) |
 
 ## 2026-08-31
 
 | Group | Gap vs group (60d) | Laggard (long) | Leader (short) | Trades |
 | --- | --- | --- | --- | --- |
 | US telecoms | T +4.7%, VZ +2.4%, TMUS -7.1% | TMUS | T | Sell 966 T @ 25.89 (open)<br>Buy 534 VZ @ 50.02 (close) |
-| Big-box retail | WMT -16.3%, TGT +24.6%, COST -8.3% | WMT | TGT | Buy 13 WMT @ 104.87 (resize)<br>Buy 18 TGT @ 160.88 (resize) |
-| Parcel | UPS -2.6%, FDX +2.6% | UPS | FDX | Buy 480 UPS @ 104.23 (flip)<br>Sell 157 FDX @ 327.4 (flip) |
+| Big-box retail | WMT -16.3%, TGT +24.6%, COST -8.3% | WMT | TGT | Buy 22 WMT @ 104.87 (resize)<br>Buy 18 TGT @ 160.88 (resize) |
+| Card networks | V +3.0%, MA +6.8%, AXP -9.8% | AXP | MA | none |
 | Home improvement | HD +3.6%, LOW -3.6% | LOW | HD | none |
 | Soft drinks | KO +8.3%, PEP -8.3% | PEP | KO | none |
 | US automakers | GM +6.4%, F -6.4% | F | GM | Sell 571 GM @ 86.32 (flip)<br>Buy 3496 F @ 13.94 (flip) |
@@ -60,9 +156,9 @@ is dated after them, so each fill price is a close that actually printed (the ge
 | --- | --- | --- | --- | --- |
 | US telecoms | T +11.8%, VZ +3.8%, TMUS -15.6% | TMUS | T | Sell 59 T @ 24.4 (resize)<br>Buy 8 TMUS @ 163.08 (resize) |
 | Big-box retail | WMT -10.9%, TGT +18.8%, COST -8.0% | WMT | TGT | none |
-| Parcel | UPS -3.8%, FDX +3.8% | UPS | FDX | Buy 28 UPS @ 93.44 (resize)<br>Sell 12 FDX @ 285.09 (resize) |
-| Home improvement | HD -0.5%, LOW +0.5% | HD | LOW | Buy 163 HD @ 284.49 (flip)<br>Sell 256 LOW @ 184.29 (flip) |
-| Soft drinks | KO +7.5%, PEP -7.5% | PEP | KO | Buy 18 PEP @ 126.72 (resize) |
+| Card networks | V +4.4%, MA +6.2%, AXP -10.6% | AXP | MA | Buy 8 AXP @ 304.1 (resize) |
+| Home improvement | HD -0.5%, LOW +0.5% | HD | LOW | Buy 163 HD @ 284.49 (flip)<br>Sell 253 LOW @ 184.29 (flip) |
+| Soft drinks | KO +7.5%, PEP -7.5% | PEP | KO | Buy 12 PEP @ 126.72 (resize) |
 | US automakers | GM +6.2%, F -6.2% | F | GM | Sell 35 GM @ 77 (resize)<br>Buy 280 F @ 12.06 (resize) |
 
 ## Open after the last rebalance
@@ -71,15 +167,15 @@ Marked at the 2026-10-23 close (latest bar pulled).
 
 | Symbol | Shares | Last close |
 | --- | --- | --- |
+| AXP | 82 | 313.22 |
 | F | 2073 | 11.6 |
-| FDX | -88 | 298.72 |
 | GM | -325 | 75.92 |
 | HD | 88 | 319.83 |
 | KO | -285 | 92.71 |
 | LOW | -136 | 198.68 |
+| MA | -44 | 623.6 |
 | PEP | 197 | 135.77 |
 | T | -1025 | 20.93 |
 | TGT | -155 | 152.76 |
 | TMUS | 153 | 146.54 |
-| UPS | 268 | 101.06 |
 | WMT | 238 | 119.89 |

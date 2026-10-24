@@ -13,7 +13,7 @@
 //
 //   node tools/seed-peer-pairs/generate.mjs            # use the cache, fetch what is missing
 //   node tools/seed-peer-pairs/generate.mjs --refresh  # re-fetch every symbol
-//   node tools/seed-peer-pairs/generate.mjs --from 2026-07 --to 2026-09
+//   node tools/seed-peer-pairs/generate.mjs --from 2025-10 --to 2026-09   (the default: a year)
 //
 // Writes api/src/TradeBlotter.Api/Data/Seed/peer-pairs-trades.json and docs/seed-portfolio.md.
 
@@ -25,17 +25,21 @@ import { fileURLToPath } from 'node:url'
 const here = dirname(fileURLToPath(import.meta.url))
 const repo = resolve(here, '..', '..')
 
-// Six of study 35's 43 groups: familiar names, and the groups the study's "Now" tab flags.
+// Six of study 35's 43 groups: familiar names, mostly ones the study's "Now" tab flags.
 const GROUPS = {
   TELCO: { label: 'US telecoms', members: ['T', 'VZ', 'TMUS'] },
   BIGBOX: { label: 'Big-box retail', members: ['WMT', 'TGT', 'COST'] },
-  PARCEL: { label: 'Parcel', members: ['UPS', 'FDX'] },
+  // Parcel (UPS/FDX) is left out: IBKR back-adjusts FDX before the June 2026 FedEx Freight spin-off,
+  // so a year of real FDX fills is not available.
+  CARDS: { label: 'Card networks', members: ['V', 'MA', 'AXP'] },
   HOMEIMP: { label: 'Home improvement', members: ['HD', 'LOW'] },
   BEV: { label: 'Soft drinks', members: ['KO', 'PEP'] },
   AUTO: { label: 'US automakers', members: ['GM', 'F'] },
 }
 
 const LOOKBACK = 60 // sessions, as in the study
+// Two years of bars: a year of month ends, plus the 60-session lookback before the first one.
+const HISTORY = '2 Y'
 const LEG_DOLLARS = 25_000
 const RESIZE_THRESHOLD = 0.05 // of a leg
 const DESKLINK = process.env.DESKLINK_URL ?? 'http://localhost:9195'
@@ -46,7 +50,7 @@ const option = (name, fallback) => {
   const i = args.indexOf(name)
   return i >= 0 && args[i + 1] ? args[i + 1] : fallback
 }
-const FROM = option('--from', '2026-07') // first month-end to trade
+const FROM = option('--from', '2025-10') // first month-end to trade
 const TO = option('--to', '2026-09') // last month-end to trade
 
 // ---------- prices ----------
@@ -58,7 +62,7 @@ async function fetchBars(symbol) {
   const response = await fetch(`${DESKLINK}/con/ibkr/history`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ symbol, secType: 'STK', duration: '1 Y', barSize: '1 day', whatToShow: 'TRADES' }),
+    body: JSON.stringify({ symbol, secType: 'STK', duration: HISTORY, barSize: '1 day', whatToShow: 'TRADES' }),
   })
   const body = await response.json().catch(() => ({}))
   if (!body.ok) throw new Error(`${symbol}: ${body.error ?? `HTTP ${response.status}`}`)
