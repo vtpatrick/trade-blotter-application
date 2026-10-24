@@ -345,6 +345,24 @@ Claude Sonnet 5.5 for the README, `docs/` and this log.
 - **Verified by running:** 118 frontend tests, 40 API tests, lint and type-check.
 - **Known issue:** the unlinked Positions page still overflows its grid by about 16px at 1900px.
 
+### 16. Dates in the blotter, README design choices, transcript, publishing
+- **Asked for:**
+  - Always show the trade date in the Time column.
+  - README run instructions, plus the author's design choices: typed filters in an AG Grid table, every trade
+    field required, and the Positions page and Bloomberg calls as a desktop-data demonstration, then hidden.
+  - Then: commit everything with the chat, and push.
+- **Claude did:**
+  - Full local date and time in the Time column (`2026-10-24 10:17:11`), matching the filter syntax.
+  - A README quick start and a "Key design choices" section.
+  - `tools/export-transcript.mjs`, and an export of the main and subagent transcripts.
+- **Problems found:**
+  - A Python string turned `.un_api.ps1` into a carriage return in the README. Claude caught it when re-reading
+    the file.
+  - The GitHub CLI isn't installed, so the repo can't be created from here.
+- **Verified by running:**
+  - 119 frontend tests, lint and type-check.
+  - The transcripts scanned for the author's email address and for credentials: none found.
+
 ---
 
 ## Author review

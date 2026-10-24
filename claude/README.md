@@ -6,7 +6,12 @@ can see what was AI-generated, how it was checked, and what a human decided.
 | File | Contents |
 | ---- | -------- |
 | [ai-usage-log.md](ai-usage-log.md) | Dated entries: the request, what Claude produced, how it was verified, problems found |
-| Full transcript | _To be added when the work is finished._ The exercise requires the complete Claude Code transcript in the repo. |
+| [transcript.md](transcript.md) | The full Claude Code session: every message, and each tool call with its result (long results shortened) |
+| [transcript-subagent-strategy-survey.md](transcript-subagent-strategy-survey.md) | The research subagent's session that surveyed the trading-strategies studies |
+
+The transcripts are generated from the session logs by `tools/export-transcript.mjs`. That script leaves out content the
+app injects behind the scenes and Claude's private reasoning, and redacts email addresses. The export was taken just
+before the final commit and push, so it ends there.
 
 ## How to keep it useful
 
