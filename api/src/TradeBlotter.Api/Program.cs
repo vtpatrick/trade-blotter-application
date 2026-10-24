@@ -35,7 +35,19 @@ var app = builder.Build();
 // Create or upgrade the SQLite database on startup so a fresh clone runs with no setup step.
 using (var scope = app.Services.CreateScope())
 {
-    scope.ServiceProvider.GetRequiredService<TradeBlotterDbContext>().Database.Migrate();
+    var db = scope.ServiceProvider.GetRequiredService<TradeBlotterDbContext>();
+    db.Database.Migrate();
+
+    // Development only: start an empty database from a simulated book (Seed:TradesFile).
+    if (app.Environment.IsDevelopment() && app.Configuration["Seed:TradesFile"] is { Length: > 0 } seedFile)
+    {
+        var path = Path.Combine(app.Environment.ContentRootPath, seedFile);
+        var seeded = await TradeSeeder.SeedIfEmptyAsync(db, path);
+        if (seeded > 0)
+        {
+            app.Logger.LogInformation("Seeded {Count} trades from {Path}", seeded, path);
+        }
+    }
 }
 
 // Configure the HTTP request pipeline.

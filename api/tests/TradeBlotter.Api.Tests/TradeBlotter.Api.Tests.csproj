@@ -22,6 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\src\TradeBlotter.Api\Data\Seed\peer-pairs-trades.json" Link="Seed\peer-pairs-trades.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\TradeBlotter.Api\TradeBlotter.Api.csproj" />
   </ItemGroup>
 

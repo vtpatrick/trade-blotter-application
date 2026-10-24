@@ -2,23 +2,15 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using TradeBlotter.Api.Contracts;
-using TradeBlotter.Api.Data;
 using TradeBlotter.Api.Domain;
 
 namespace TradeBlotter.Api.Tests;
 
 /// <summary>
 /// End-to-end tests through the HTTP pipeline. Each test gets its own in-memory SQLite
-/// database (xUnit creates a new class instance per test).
+/// database (xUnit creates a new class instance per test) and no seed data.
 /// </summary>
 public sealed class TradesApiTests : IDisposable
 {
@@ -27,31 +19,18 @@ public sealed class TradesApiTests : IDisposable
         Converters = { new JsonStringEnumConverter() },
     };
 
-    private readonly SqliteConnection _connection;
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly ApiFactory _api = new();
     private readonly HttpClient _client;
 
     public TradesApiTests()
     {
-        // An in-memory SQLite database lives as long as its connection stays open.
-        _connection = new SqliteConnection("Data Source=:memory:");
-        _connection.Open();
-
-        _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
-            builder.ConfigureTestServices(services =>
-            {
-                services.RemoveAll<DbContextOptions<TradeBlotterDbContext>>();
-                services.AddDbContext<TradeBlotterDbContext>(o => o.UseSqlite(_connection));
-            }));
-
-        _client = _factory.CreateClient();
+        _client = _api.Factory.CreateClient();
     }
 
     public void Dispose()
     {
         _client.Dispose();
-        _factory.Dispose();
-        _connection.Dispose();
+        _api.Dispose();
     }
 
     private Task<HttpResponseMessage> PostTrade(object body) => _client.PostAsJsonAsync("/api/trades", body);

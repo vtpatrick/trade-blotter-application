@@ -1,0 +1,2 @@
+# Price cache for the seed generator (IBKR data; regenerable)
+tools/seed-peer-pairs/.cache/
