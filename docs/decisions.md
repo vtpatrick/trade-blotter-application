@@ -1,0 +1,96 @@
+# Design decisions
+
+Short records of choices that shape the project. Newest at the bottom.
+
+## 1. Two independent projects: `api/` and `app/`
+
+**Decision:** A .NET 8 Web API and a Vue 3 (Composition API) frontend in separate folders, joined only by HTTP.
+**Why:** Matches the requested structure and lets each side be built, tested and deployed on its own.
+**Trade-off:** Types are duplicated across the boundary until they are generated from OpenAPI.
+
+## 2. Vite proxy for `/api` in development
+
+**Decision:** The dev server forwards `/api/*` to `http://localhost:5035`; the API has no CORS configuration.
+**Why:** The browser sees a single origin, so local development needs no CORS setup and no hard-coded API URL in
+frontend code.
+**Trade-off:** Only covers dev. Hosting the frontend on another origin later requires CORS or a reverse proxy.
+
+## 3. Health endpoint aggregates ASP.NET Core health checks
+
+**Decision:** `HealthController` calls `HealthCheckService` and returns a custom JSON report. Unhealthy is `503`;
+Degraded stays `200`.
+**Why:** New dependencies (database, market data) become one registration line and appear in the report with no
+controller changes. Degraded still serves traffic, so load balancers should not treat it as down.
+**Trade-off:** One endpoint serves both "is the process up" and "are dependencies healthy". A production setup would
+likely split liveness and readiness.
+
+## 4. The UI separates "unhealthy" from "offline"
+
+**Decision:** A `503` carrying a report is `unhealthy`. No report (network error, timeout, non-JSON response) is `offline`.
+**Why:** "The API told us something is wrong" and "we cannot reach the API" need different responses from a user.
+**Found by testing:** with the API stopped, the Vite proxy returns a plain-text `502`, not a `500` as first assumed.
+The client therefore keys on the response having a JSON health body, not on a particular status code.
+
+## 5. Polling with a self-scheduling timer
+
+**Decision:** The Pinia store schedules the next check only after the previous one finishes, every 10 seconds.
+**Why:** Checks can never overlap or pile up behind a slow response. Simpler than a push channel for a heartbeat.
+**Trade-off:** Up to 10 seconds of lag in the badge. Live trade data would use SignalR or SSE instead.
+
+## 6. Reproducible setup
+
+**Decision:** `run_app.ps1` uses `npm ci` and reinstalls when `package-lock.json` is newer than `node_modules`.
+`api/global.json` pins SDK `8.0.100` with `rollForward: latestFeature`.
+**Why:** A fresh clone runs with two commands, and a pull that changes dependencies does not leave a stale
+`node_modules`. Any installed 8.0.x SDK is accepted, but a newer major SDK alone is not.
+**Trade-off:** The scripts cannot install .NET or Node themselves; they check for them and say what is missing.
+
+## 7. Windows PowerShell dev scripts
+
+**Decision:** `run_api.ps1` and `run_app.ps1` at the repo root.
+**Why:** The requested workflow and the author's platform.
+**Trade-off:** Not usable as-is on macOS or Linux without PowerShell 7. The underlying commands are
+`dotnet watch run` and `npm run dev`.
+
+## 8. Weighted average cost, with shorts allowed
+
+**Decision:** Positions use the weighted average cost method. Reducing a position keeps its average cost; flipping
+through zero opens the remainder at the flipping trade's price. Selling more than is held creates a short.
+**Why:** It is the usual blotter convention and answers "average cost on mixed buys and sells" unambiguously.
+Allowing shorts keeps booking a pure append with no position check.
+**Trade-off:** No FIFO/LIFO lot tracking, so realized P&L per lot is not available.
+
+## 9. Positions derived on every request by a pure calculator
+
+**Decision:** `GET /api/positions` loads all trades and runs `PositionCalculator.Calculate`. Nothing about positions
+is stored.
+**Why:** The brief requires derived positions, and a pure function is the easiest thing to unit test thoroughly.
+**Trade-off:** Cost grows linearly with trade history. A snapshot or incremental update would be needed at scale.
+
+## 10. SQLite via EF Core, migrated on startup
+
+**Decision:** A committed `InitialCreate` migration, applied with `Database.Migrate()` when the API starts.
+Timestamps are stored as integers (`DateTimeOffsetToBinaryConverter`) so SQLite can sort them.
+**Why:** Zero setup for a reviewer. Migrations rather than `EnsureCreated` so the schema can evolve.
+**Trade-off:** Migrating on startup is not something to do with multiple instances in production.
+
+## 11. `side` validated as a string
+
+**Decision:** `CreateTradeRequest.Side` is a string restricted to `Buy`/`Sell` with `[AllowedValues]`, then parsed to
+the `TradeSide` enum.
+**Found by testing:** binding straight to the enum accepted `"0"` as `Buy`, even with integer enum values disabled.
+An API test caught it.
+
+## 12. SignalR broadcasts trades; the client re-fetches positions
+
+**Decision:** The hub pushes only `TradeAdded`. Clients upsert by id (the submitting client already has the trade
+from its `POST` response) and then re-fetch `/api/positions`.
+**Why:** Position logic lives in one place (the server). The submitting browser updates instantly even if the live feed
+is down.
+**Trade-off:** One extra HTTP call per trade per client. Pushing positions on the hub would remove it.
+
+## 13. Client-side validation mirrors the server
+
+**Decision:** `validateTrade.ts` repeats the server's rules so errors appear without a round trip. The server stays
+authoritative, and its `400` field errors are shown on the same inputs.
+**Trade-off:** The rules exist twice. Generating them from a shared schema would avoid drift.

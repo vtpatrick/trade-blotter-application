@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C87408DD-D5C6-4978-A4C1-3CF5EFDE7043}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeBlotter.Api", "src\TradeBlotter.Api\TradeBlotter.Api.csproj", "{593E908B-F750-42AE-A35A-5CCFD881A7DE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{5F0BBE97-5B3D-4617-8148-8FF2583EF402}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeBlotter.Api.Tests", "tests\TradeBlotter.Api.Tests\TradeBlotter.Api.Tests.csproj", "{112D6097-5756-49CE-9298-7EF96FF0EEE6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{593E908B-F750-42AE-A35A-5CCFD881A7DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{593E908B-F750-42AE-A35A-5CCFD881A7DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{593E908B-F750-42AE-A35A-5CCFD881A7DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{593E908B-F750-42AE-A35A-5CCFD881A7DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{112D6097-5756-49CE-9298-7EF96FF0EEE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{112D6097-5756-49CE-9298-7EF96FF0EEE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{112D6097-5756-49CE-9298-7EF96FF0EEE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{112D6097-5756-49CE-9298-7EF96FF0EEE6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{593E908B-F750-42AE-A35A-5CCFD881A7DE} = {C87408DD-D5C6-4978-A4C1-3CF5EFDE7043}
+		{112D6097-5756-49CE-9298-7EF96FF0EEE6} = {5F0BBE97-5B3D-4617-8148-8FF2583EF402}
+	EndGlobalSection
+EndGlobal

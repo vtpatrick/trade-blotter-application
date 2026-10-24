@@ -1,0 +1,28 @@
+@TradeBlotter.Api_HostAddress = http://localhost:5035
+
+GET {{TradeBlotter.Api_HostAddress}}/api/health
+Accept: application/json
+
+###
+
+POST {{TradeBlotter.Api_HostAddress}}/api/trades
+Content-Type: application/json
+
+{
+  "symbol": "AAPL",
+  "side": "Buy",
+  "quantity": 100,
+  "price": 150.25
+}
+
+###
+
+GET {{TradeBlotter.Api_HostAddress}}/api/trades
+Accept: application/json
+
+###
+
+GET {{TradeBlotter.Api_HostAddress}}/api/positions
+Accept: application/json
+
+###
