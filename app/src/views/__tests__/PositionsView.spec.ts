@@ -123,12 +123,9 @@ describe('PositionsView (AG Grid)', () => {
     expect(w.findAll('.ag-full-width-row')).toHaveLength(0)
   })
 
-  it('shows current technicals against the live price', async () => {
+  it('keeps the Bloomberg technicals columns hidden', async () => {
     const w = await mountGrid()
-    const wmt = w.findAll('.ag-row').find((row) => row.find('[col-id="symbol"]').text() === 'WMT')!
 
-    expect(wmt.find('[col-id="rsi14"]').text()).toBe('64.2')
-    expect(wmt.find('[col-id="vsMa50"]').text()).toBe('+10.0%') // last 110 vs 100
-    expect(wmt.find('[col-id="vol30"]').text()).toBe('18.5%')
+    expect(w.find('.ag-header-cell[col-id="rsi14"]').exists()).toBe(false)
   })
 })

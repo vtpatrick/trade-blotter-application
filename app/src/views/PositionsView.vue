@@ -14,6 +14,7 @@ import type {
 import { useLiveQuotes } from '@/composables/useLiveQuotes'
 import { useCurrentTechnicals } from '@/composables/useTechnicals'
 import { expressionFilter } from '@/grid/expressionFilter'
+import { fitColumnsToWidth } from '@/grid/fitColumns'
 import { spacerColumn } from '@/grid/spacerColumn'
 import PositionDetailRow, { type DetailRowContext } from '@/grid/PositionDetailRow.vue'
 import { keepDetailUnderParent, toGridRows, type PositionGridRow } from '@/grid/positionRows'
@@ -38,9 +39,7 @@ const { quotes, status, error, updatedAt } = useLiveQuotes(() =>
 )
 
 // Current Bloomberg technicals, refreshed every few minutes (they move slowly).
-const { technicals, status: technicalsStatus } = useCurrentTechnicals(() =>
-  positions.value.map((p) => p.symbol),
-)
+const { technicals } = useCurrentTechnicals(() => positions.value.map((p) => p.symbol))
 
 /** Positions marked to the live price, with the technicals measured against that price. */
 const valued = computed(() =>
@@ -89,9 +88,9 @@ const num = (
   ({
     field,
     headerName,
-    // Share all the width up to the technicals pinned on the right; no gap between the blocks.
-    flex: 1,
-    minWidth: width + 12,
+    // Equal starting width (fitColumnsToWidth scales them); `width` is the least the figures need.
+    width: 100,
+    minWidth: Math.min(width, 64),
     cellClass: 'cell-num',
     headerClass: 'cell-num',
     ...expressionFilter<PositionGridRow>('number', (r) => r[field]),
@@ -116,8 +115,8 @@ const columnDefs: ColDef<PositionGridRow>[] = [
   {
     field: 'symbol',
     headerName: 'Symbol',
-    flex: 0.8,
-    minWidth: 88,
+    width: 100,
+    minWidth: 56,
     sort: 'asc',
     cellClass: 'cell-symbol',
     ...expressionFilter<PositionGridRow>('text', (r) => r.symbol),
@@ -125,8 +124,8 @@ const columnDefs: ColDef<PositionGridRow>[] = [
   {
     field: 'name',
     headerName: 'Name',
-    flex: 1.8,
-    minWidth: 180,
+    width: 200,
+    minWidth: 120,
     cellClass: 'cell-muted',
     valueFormatter: (p) => p.value ?? (p.node?.rowPinned ? '' : '—'),
     ...expressionFilter<PositionGridRow>('text', (r) => r.name),
@@ -169,6 +168,9 @@ const columnDefs: ColDef<PositionGridRow>[] = [
 
 const defaultColDef: ColDef<PositionGridRow> = { sortable: true, resizable: true }
 
+// Columns always fill the grid exactly (also after the user resizes one); spacer and chevron are fixed.
+const fit = fitColumnsToWidth<PositionGridRow>({ spacer: 50, expand: 30 })
+
 // ---------- grid wiring ----------
 const api = shallowRef<GridApi<PositionGridRow>>()
 /** Positions passing the column filters (no detail rows): what the totals and cards add up. */
@@ -177,6 +179,7 @@ const isFiltered = ref(false)
 
 function onGridReady(event: GridReadyEvent<PositionGridRow>) {
   api.value = event.api
+  fit.onGridReady(event)
   refreshShown(event)
 }
 
@@ -254,9 +257,6 @@ const priceNote = computed(() => {
       </p>
       <p class="price-note" :class="status" :title="error ?? undefined">
         {{ priceNote }}
-        <span v-if="technicalsStatus === 'unavailable'" class="unavailable-note">
-          · technicals unavailable
-        </span>
       </p>
     </header>
 
@@ -316,11 +316,16 @@ const priceNote = computed(() => {
         :pinned-bottom-row-data="pinnedBottomRowData"
         :enable-filter-handlers="true"
         :animate-rows="false"
+        :suppress-horizontal-scroll="true"
         :loading="loading && positions.length === 0"
         overlay-no-rows-template="No open positions."
         @grid-ready="onGridReady"
         @filter-changed="refreshShown"
         @row-clicked="onRowClicked"
+        @first-data-rendered="fit.onFirstDataRendered"
+        @row-data-updated="fit.onRowDataUpdated"
+        @column-resized="fit.onColumnResized"
+        @grid-size-changed="fit.onGridSizeChanged"
       />
     </section>
 
@@ -362,7 +367,6 @@ h1 {
   color: var(--color-text-muted);
 }
 
-.unavailable-note,
 .price-note.unavailable {
   color: var(--color-danger);
 }

@@ -9,6 +9,7 @@ export function spacerColumn<T>(): ColDef<T> {
     colId: 'spacer',
     headerName: '',
     width: 50,
+    hide: true, // it only separates the Bloomberg columns, which are hidden for now
     sortable: false,
     resizable: false,
     suppressMovable: true,

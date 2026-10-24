@@ -27,7 +27,6 @@ onUnmounted(() => {
 
     <nav>
       <RouterLink to="/">Blotter</RouterLink>
-      <RouterLink to="/positions">Positions</RouterLink>
     </nav>
 
     <div class="indicators">
@@ -48,7 +47,8 @@ onUnmounted(() => {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem 1.25rem;
-  padding: 0.3rem 0.75rem;
+  /* Header contents line up with the centred content area below. */
+  padding: 0.3rem max(0.75rem, calc((100% - var(--content-max-width)) / 2 + 0.75rem));
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
 }
@@ -83,6 +83,8 @@ nav a.router-link-exact-active {
 }
 
 .app-main {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
   padding: 0.5rem 0.75rem;
 }
 </style>

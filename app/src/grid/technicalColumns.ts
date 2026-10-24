@@ -17,7 +17,8 @@ const signClasses = {
 
 /**
  * Bloomberg's RSI(14), price against the 50- and 200-day averages, and 30-day volatility, as
- * columns pinned to the right edge (no group header row). `source` says where the figures come
+ * the grid's last columns, set apart by an accent header and a faint tint (not pinned, so row
+ * rules run through them unbroken). `source` says where the figures come
  * from and is added to each header's tooltip. Rows carry the figures as fields (utils/technicals.ts).
  */
 export function technicalColumnDefs<T extends TechnicalColumns>(source: string): ColDef<T>[] {
@@ -32,11 +33,12 @@ export function technicalColumnDefs<T extends TechnicalColumns>(source: string):
       field,
       headerName: header,
       headerTooltip: `${tooltip}. ${source}`,
-      width,
-      // Bloomberg's figures sit at the right edge, apart from the trade or position data.
-      pinned: 'right',
-      cellClass: 'cell-num',
-      headerClass: 'cell-num',
+      // Equal starting width like every column (fitColumnsToWidth scales them, never past the grid).
+      width: 100,
+      minWidth: Math.min(width, 56),
+      hide: true, // hidden for now; the figures are still loaded
+      cellClass: 'cell-num cell-bbg',
+      headerClass: 'cell-num header-bbg',
       ...expressionFilter<T>('number', (row) => row[field]),
       ...extra,
     }) as ColDef<T>

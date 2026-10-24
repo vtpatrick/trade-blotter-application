@@ -136,30 +136,10 @@ describe('BlotterTable (AG Grid)', () => {
     expect(symbols(w)).toEqual(['AAPL', 'TSLA', 'MSFT'])
   })
 
-  it('shows Bloomberg technicals as they stood on each trade date, and filters on them', async () => {
-    bloomberg.fetchTechnicalsHistory.mockResolvedValue(
-      new Map([
-        // Trades are booked 2026-10-24 (New York); the 23rd is the last bar before them.
-        ['AAPL', [{ date: '2026-10-23', rsi14: 72.4, ma50: 0.5, ma200: 2, vol30: 30 }]],
-        ['MSFT', [{ date: '2026-10-23', rsi14: 28, ma50: 1, ma200: 1, vol30: 20 }]],
-      ]),
-    )
+  it('keeps the Bloomberg technicals columns hidden', async () => {
     const w = await mountGrid()
-    await new Promise((resolve) => setTimeout(resolve, 20))
-    const cell = (symbol: string, column: string) =>
-      w
-        .findAll('.ag-row')
-        .find((row) => row.find('[col-id="symbol"]').text() === symbol)!
-        .find(`[col-id="${column}"]`)
 
-    expect(bloomberg.fetchTechnicalsHistory).toHaveBeenCalledTimes(1)
-    expect(cell('AAPL', 'rsi14').text()).toBe('72.4')
-    expect(cell('AAPL', 'rsi14').classes()).toContain('rsi-high')
-    expect(cell('AAPL', 'vsMa50').text()).toBe('+100.0%') // price 1 vs average 0.5
-    expect(cell('AAPL', 'vsMa200').text()).toBe('−50.0%')
-    expect(cell('TSLA', 'rsi14').text()).toBe('—') // no Bloomberg history for TSLA
-
-    await filter(w, 'RSI', '<30')
-    expect(symbols(w)).toEqual(['MSFT'])
+    expect(w.find('.ag-header-cell[col-id="rsi14"]').exists()).toBe(false)
+    expect(w.find('.ag-header-cell[col-id="spacer"]').exists()).toBe(false)
   })
 })

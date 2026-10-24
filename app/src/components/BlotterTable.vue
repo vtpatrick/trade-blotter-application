@@ -6,6 +6,7 @@ import type { ColDef, GridApi, GridReadyEvent, RowClassParams } from 'ag-grid-co
 import type { Trade } from '@/api/trades'
 import { useTradeTechnicals } from '@/composables/useTechnicals'
 import { expressionFilter } from '@/grid/expressionFilter'
+import { fitColumnsToWidth } from '@/grid/fitColumns'
 import { spacerColumn } from '@/grid/spacerColumn'
 import { technicalColumnDefs } from '@/grid/technicalColumns'
 import { gridTheme } from '@/grid/theme'
@@ -19,7 +20,7 @@ const { trades, newTradeIds, loading } = storeToRefs(blotter)
 /** A trade plus Bloomberg's technicals on its trade date. */
 type TradeRow = Trade & TechnicalColumns
 
-const { byTrade, status: technicalsStatus } = useTradeTechnicals(() => trades.value)
+const { byTrade } = useTradeTechnicals(() => trades.value)
 const rowData = computed<TradeRow[]>(() =>
   trades.value.map((t) => ({ ...t, ...(byTrade.value.get(t.id) ?? NO_TECHNICALS) })),
 )
@@ -36,8 +37,8 @@ const columnDefs: ColDef<TradeRow>[] = [
     headerName: 'Time',
     field: 'timestamp',
     sort: 'desc',
-    flex: 1.4,
-    minWidth: 140,
+    width: 100,
+    minWidth: 110,
     cellClass: 'cell-mono cell-muted',
     valueFormatter: (p) => (p.value ? formatTimestamp(p.value) : ''),
     tooltipValueGetter: (p) => (p.value ? new Date(p.value).toLocaleString() : ''),
@@ -48,16 +49,16 @@ const columnDefs: ColDef<TradeRow>[] = [
   {
     headerName: 'Symbol',
     field: 'symbol',
-    flex: 1,
-    minWidth: 84,
+    width: 100,
+    minWidth: 56,
     cellClass: 'cell-symbol',
     ...expressionFilter<TradeRow>('text', (t) => t.symbol),
   },
   {
     headerName: 'Side',
     field: 'side',
-    flex: 0.8,
-    minWidth: 76,
+    width: 100,
+    minWidth: 56,
     // Values are only ever Buy or Sell (validated by the API), so the markup is safe.
     cellRenderer: (p: { value: Trade['side'] }) =>
       `<span class="side-badge ${p.value === 'Buy' ? 'buy' : 'sell'}">${p.value === 'Buy' ? 'Buy' : 'Sell'}</span>`,
@@ -66,8 +67,8 @@ const columnDefs: ColDef<TradeRow>[] = [
   {
     headerName: 'Quantity',
     field: 'quantity',
-    flex: 1,
-    minWidth: 100,
+    width: 100,
+    minWidth: 64,
     cellClass: 'cell-num',
     headerClass: 'cell-num',
     valueFormatter: (p) => formatQuantity(p.value),
@@ -76,8 +77,8 @@ const columnDefs: ColDef<TradeRow>[] = [
   {
     headerName: 'Price',
     field: 'price',
-    flex: 1,
-    minWidth: 100,
+    width: 100,
+    minWidth: 64,
     cellClass: 'cell-num',
     headerClass: 'cell-num',
     valueFormatter: (p) => formatPrice(p.value),
@@ -86,8 +87,8 @@ const columnDefs: ColDef<TradeRow>[] = [
   {
     headerName: 'Notional',
     field: 'notional',
-    flex: 1.2,
-    minWidth: 120,
+    width: 100,
+    minWidth: 80,
     cellClass: 'cell-num',
     headerClass: 'cell-num',
     valueFormatter: (p) => formatAmount(p.value),
@@ -99,8 +100,11 @@ const columnDefs: ColDef<TradeRow>[] = [
   ),
 ]
 
-// Trade columns share all the width up to the Bloomberg group, which is pinned to the right edge.
 const defaultColDef: ColDef<TradeRow> = { sortable: true, resizable: true }
+
+// Columns always fill the grid exactly and never overflow it, also after the user resizes one;
+// the spacer stays 50px.
+const fit = fitColumnsToWidth<TradeRow>({ spacer: 50 })
 
 const api = shallowRef<GridApi<TradeRow>>()
 const shown = ref(0)
@@ -108,6 +112,7 @@ const isFiltered = ref(false)
 
 function onGridReady(event: GridReadyEvent<TradeRow>) {
   api.value = event.api
+  fit.onGridReady(event)
   refreshCount()
 }
 
@@ -121,6 +126,7 @@ function refreshCount() {
 const flashed = new Set<number>()
 function onRowDataUpdated() {
   refreshCount()
+  if (api.value) fit.onRowDataUpdated({ api: api.value })
   const nodes = [...newTradeIds.value]
     .filter((id) => !flashed.has(id))
     .map((id) => {
@@ -147,13 +153,6 @@ const rowClass = (p: RowClassParams<TradeRow>) =>
     <h2 class="card-title">
       <span>Blotter</span>
       <span class="count">
-        <span
-          v-if="technicalsStatus === 'unavailable'"
-          class="technicals-note"
-          title="Bloomberg technicals at trade time could not be loaded (DeskLink / Bloomberg)"
-        >
-          Technicals unavailable ·
-        </span>
         {{ countLabel }}
         <button
           v-if="isFiltered"
@@ -176,12 +175,16 @@ const rowClass = (p: RowClassParams<TradeRow>) =>
       :get-row-class="rowClass"
       :enable-filter-handlers="true"
       :animate-rows="false"
+      :suppress-horizontal-scroll="true"
       :loading="loading && trades.length === 0"
       :tooltip-show-delay="400"
       overlay-no-rows-template="No trades yet. Book one with the ticket."
       @grid-ready="onGridReady"
       @filter-changed="refreshCount"
       @row-data-updated="onRowDataUpdated"
+      @first-data-rendered="fit.onFirstDataRendered"
+      @column-resized="fit.onColumnResized"
+      @grid-size-changed="fit.onGridSizeChanged"
     />
   </section>
 </template>
@@ -198,10 +201,6 @@ const rowClass = (p: RowClassParams<TradeRow>) =>
 .grid {
   flex: 1;
   min-height: 0;
-}
-
-.technicals-note {
-  color: var(--color-danger);
 }
 
 .count {
